@@ -1,0 +1,109 @@
+.conversation-list {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.conversation-list__item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    cursor: pointer;
+    border-bottom: 1px solid var(--color-border);
+    transition: background-color var(--transition-fast);
+}
+
+.conversation-list__item:hover {
+    background-color: var(--color-bg-secondary);
+}
+
+.conversation-list__avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--color-primary), #2563eb);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.conversation-list__content {
+    flex: 1;
+    min-width: 0;
+}
+
+.conversation-list__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-xs);
+}
+
+.conversation-list__name {
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-base);
+}
+
+.conversation-list__time {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+}
+
+.conversation-list__preview {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.conversation-list__message {
+    flex: 1;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.conversation-list__unread-badge {
+    background-color: var(--color-primary);
+    color: white;
+    border-radius: 12px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: var(--font-weight-bold);
+    min-width: 20px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+/* Empty State */
+.conversation-list__empty {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-xl);
+    text-align: center;
+}
+
+.conversation-list__empty-icon {
+    color: var(--color-text-tertiary);
+    margin-bottom: var(--spacing-md);
+}
+
+.conversation-list__empty-text {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-xs);
+}
+
+.conversation-list__empty-subtext {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+}

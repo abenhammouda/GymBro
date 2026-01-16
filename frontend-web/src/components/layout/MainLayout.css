@@ -1,0 +1,30 @@
+.main-layout {
+    display: flex;
+    min-height: 100vh;
+    background-color: var(--color-bg-secondary);
+}
+
+.main-layout__content {
+    flex: 1;
+    margin-left: var(--sidebar-width);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.main-layout__main {
+    flex: 1;
+    padding: var(--spacing-xl);
+    overflow-y: auto;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .main-layout__content {
+        margin-left: 0;
+    }
+
+    .main-layout__main {
+        padding: var(--spacing-md);
+    }
+}

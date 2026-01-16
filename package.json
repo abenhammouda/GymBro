@@ -1,0 +1,19 @@
+{
+  "name": "coaching-app",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "frontend-web",
+    "frontend-mobile",
+    "shared"
+  ],
+  "scripts": {
+    "web": "cd frontend-web && npm run dev",
+    "mobile": "cd frontend-mobile && npx expo start",
+    "backend": "cd backend && dotnet run --project src/CoachingApp.API",
+    "install:all": "npm install && cd frontend-web && npm install && cd ../frontend-mobile && npm install && cd ../shared && npm install"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}
