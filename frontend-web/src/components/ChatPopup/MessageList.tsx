@@ -55,7 +55,26 @@ const MessageList: React.FC<MessageListProps> = ({ messages, conversationId, onS
     };
 
     const isOwnMessage = (message: Message) => {
-        return message.senderId === currentUser?.id && message.senderType === userType;
+        if (!currentUser) {
+            console.warn('No current user found');
+            return false;
+        }
+
+        // Get the correct ID based on user type (coachId or adherentId)
+        const currentUserId = userType === 'Coach' ? currentUser.coachId : currentUser.adherentId;
+
+        if (!currentUserId) {
+            console.warn('Could not determine current user ID', { currentUser, userType });
+            return false;
+        }
+
+        // Convert both to numbers for comparison
+        const messageSenderId = Number(message.senderId);
+        const userId = Number(currentUserId);
+        const senderTypeMatch = message.senderType === userType;
+        const senderIdMatch = messageSenderId === userId;
+
+        return senderIdMatch && senderTypeMatch;
     };
 
     return (

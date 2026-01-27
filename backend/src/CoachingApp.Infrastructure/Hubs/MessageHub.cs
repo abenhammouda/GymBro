@@ -7,8 +7,8 @@ using System.Security.Claims;
 
 namespace CoachingApp.Infrastructure.Hubs;
 
-// TODO: Fix JWT authentication for SignalR - currently disabled to allow testing
-// [Authorize]
+
+[Authorize]
 public class MessageHub : Hub
 {
     private readonly IMessageService _messageService;

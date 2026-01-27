@@ -76,7 +76,20 @@ public class MessagesController : ControllerBase
             var messages = await _messageService.GetMessagesAsync(conversationId, userId, userType);
             _logger.LogInformation($"Retrieved {messages.Count()} messages");
 
-            return Ok(messages);
+            // Map to DTOs to avoid circular references
+            var response = messages.Select(m => new MessageResponse
+            {
+                MessageId = m.MessageId,
+                ConversationId = m.ConversationId,
+                SenderId = m.SenderId,
+                SenderType = m.SenderType.ToString(),
+                MessageText = m.MessageText,
+                IsRead = m.IsRead,
+                SentAt = m.SentAt,
+                ReadAt = m.ReadAt
+            });
+
+            return Ok(response);
         }
         catch (UnauthorizedAccessException ex)
         {
@@ -107,7 +120,20 @@ public class MessagesController : ControllerBase
                 request.ConversationId,
                 request.MessageText);
 
-            return Ok(message);
+            // Map to DTO to avoid circular references
+            var response = new MessageResponse
+            {
+                MessageId = message.MessageId,
+                ConversationId = message.ConversationId,
+                SenderId = message.SenderId,
+                SenderType = message.SenderType.ToString(),
+                MessageText = message.MessageText,
+                IsRead = message.IsRead,
+                SentAt = message.SentAt,
+                ReadAt = message.ReadAt
+            };
+
+            return Ok(response);
         }
         catch (UnauthorizedAccessException ex)
         {

@@ -17,6 +17,7 @@ public class MessageRepository : IMessageRepository
     public async Task<IEnumerable<Message>> GetMessagesByConversationIdAsync(int conversationId)
     {
         return await _context.Messages
+            .AsNoTracking() // Prevent loading navigation properties
             .Where(m => m.ConversationId == conversationId)
             .OrderBy(m => m.SentAt)
             .ToListAsync();
@@ -52,6 +53,11 @@ public class MessageRepository : IMessageRepository
     {
         return await _context.Messages
             .Include(m => m.Conversation)
+                .ThenInclude(c => c.CoachClient)
+                    .ThenInclude(cc => cc.Coach)
+            .Include(m => m.Conversation)
+                .ThenInclude(c => c.CoachClient)
+                    .ThenInclude(cc => cc.Adherent)
             .FirstOrDefaultAsync(m => m.MessageId == messageId);
     }
 

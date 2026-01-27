@@ -17,6 +17,7 @@ public enum CoachClientStatus
 
 public enum ProgramStatus
 {
+    Draft,
     Active,
     Completed,
     Cancelled

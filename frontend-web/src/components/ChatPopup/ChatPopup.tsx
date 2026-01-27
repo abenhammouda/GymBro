@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MessageCircle, X, Minimize2 } from 'lucide-react';
 import ConversationList from './ConversationList';
 import MessageList from './MessageList';
@@ -17,6 +17,24 @@ const ChatPopup: React.FC = () => {
     const [unreadCount, setUnreadCount] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
+
+    // Use refs to avoid closure issues with SignalR listeners
+    const selectedConversationRef = useRef<Conversation | null>(null);
+    const isOpenRef = useRef(false);
+    const isMinimizedRef = useRef(false);
+
+    // Update refs when state changes
+    useEffect(() => {
+        selectedConversationRef.current = selectedConversation;
+    }, [selectedConversation]);
+
+    useEffect(() => {
+        isOpenRef.current = isOpen;
+    }, [isOpen]);
+
+    useEffect(() => {
+        isMinimizedRef.current = isMinimized;
+    }, [isMinimized]);
 
     useEffect(() => {
         initializeChat();
@@ -49,14 +67,45 @@ const ChatPopup: React.FC = () => {
     };
 
     const handleReceiveMessage = (message: Message) => {
-        // Add message to current conversation if it's selected
-        if (selectedConversation && message.conversationId === selectedConversation.conversationId) {
-            setMessages(prev => [...prev, message]);
+        console.log('📨 handleReceiveMessage called:', {
+            messageId: message.messageId,
+            conversationId: message.conversationId,
+            messageText: message.messageText,
+            selectedConversationId: selectedConversationRef.current?.conversationId,
+            isOpen: isOpenRef.current,
+            isMinimized: isMinimizedRef.current
+        });
+
+        // Add or update message in current conversation if it's selected
+        if (selectedConversationRef.current && message.conversationId === selectedConversationRef.current.conversationId) {
+            console.log('✅ Message is for current conversation, adding to list');
+            setMessages(prev => {
+                // Check if this is replacing an optimistic message (same text, recent timestamp)
+                const optimisticIndex = prev.findIndex(m =>
+                    m.messageText === message.messageText &&
+                    m.senderId === message.senderId &&
+                    Date.now() - m.messageId < 5000 // Within last 5 seconds
+                );
+
+                if (optimisticIndex !== -1) {
+                    console.log('🔄 Replacing optimistic message at index:', optimisticIndex);
+                    // Replace optimistic message with real one
+                    const newMessages = [...prev];
+                    newMessages[optimisticIndex] = message;
+                    return newMessages;
+                } else {
+                    console.log('➕ Adding new message to list');
+                    // Add new message
+                    return [...prev, message];
+                }
+            });
 
             // Mark as read if chat is open
-            if (isOpen && !isMinimized) {
+            if (isOpenRef.current && !isMinimizedRef.current) {
                 messageService.markAsRead(message.messageId);
             }
+        } else {
+            console.log('❌ Message NOT for current conversation or no conversation selected');
         }
 
         // Update conversations list
@@ -128,10 +177,38 @@ const ChatPopup: React.FC = () => {
         if (!selectedConversation) return;
 
         try {
+            const currentUser = authService.getCurrentUser();
+            const userType = localStorage.getItem('userType') as 'Coach' | 'Adherent' | null;
+            if (!currentUser || !userType) return;
+
+            // Get the correct user ID based on type
+            const userId = userType === 'Coach' ? currentUser.coachId : currentUser.adherentId;
+            if (!userId) {
+                console.error('Could not determine user ID', { currentUser, userType });
+                return;
+            }
+
+            // Create optimistic message for immediate display
+            const optimisticMessage: Message = {
+                messageId: Date.now(), // Temporary ID
+                conversationId: selectedConversation.conversationId,
+                senderId: userId,
+                senderType: userType,
+                messageText,
+                isRead: false,
+                sentAt: new Date().toISOString(),
+                readAt: undefined
+            };
+
+            // Add message immediately to UI for instant feedback
+            setMessages(prev => [...prev, optimisticMessage]);
+
             // Send via SignalR (which also saves to DB)
             await signalRService.sendMessage(selectedConversation.conversationId, messageText);
         } catch (error: any) {
             setError(error.message || 'Failed to send message');
+            // Remove optimistic message on error
+            setMessages(prev => prev.filter(m => m.messageId !== Date.now()));
         }
     };
 

@@ -74,6 +74,14 @@ builder.Services.AddScoped<ICoachRepository, CoachRepository>();
 builder.Services.AddScoped<IAdherentRepository, AdherentRepository>();
 builder.Services.AddScoped<IMessageRepository, MessageRepository>();
 builder.Services.AddScoped<IConversationRepository, ConversationRepository>();
+builder.Services.AddScoped<IExerciseTemplateRepository, ExerciseTemplateRepository>();
+builder.Services.AddScoped<IProgramTemplateRepository, ProgramTemplateRepository>();
+
+// Register Exercise Template Service
+builder.Services.AddScoped<ExerciseTemplateService>();
+
+// Register Program Template Service
+builder.Services.AddScoped<ProgramTemplateService>();
 
 // Configure CORS
 builder.Services.AddCors(options =>
@@ -103,6 +111,20 @@ if (app.Environment.IsDevelopment())
 // app.UseHttpsRedirection();
 
 app.UseCors("AllowAll");
+
+// Ensure uploads directory exists before serving static files
+var uploadsPath = Path.Combine(builder.Environment.ContentRootPath, "uploads");
+if (!Directory.Exists(uploadsPath))
+{
+    Directory.CreateDirectory(uploadsPath);
+}
+
+// Serve uploaded videos as static files
+app.UseStaticFiles(new Microsoft.AspNetCore.Builder.StaticFileOptions
+{
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(uploadsPath),
+    RequestPath = "/uploads"
+});
 
 app.UseAuthentication();
 app.UseAuthorization();

@@ -69,17 +69,38 @@ public class MessageService : IMessageService
 
     public async Task<IEnumerable<Message>> GetMessagesAsync(int conversationId, int userId, SenderType userType)
     {
+        _logger.LogInformation($"GetMessagesAsync: conversationId={conversationId}, userId={userId}, userType={userType}");
+        
         // Verify user has access to this conversation
         var conversation = await _conversationRepository.GetConversationByIdAsync(conversationId);
+        
         if (conversation == null)
-            throw new InvalidOperationException("Conversation not found");
+        {
+            _logger.LogWarning($"Conversation {conversationId} not found");
+            throw new InvalidOperationException($"Conversation {conversationId} not found");
+        }
+
+        _logger.LogInformation($"Conversation found: ConversationId={conversation.ConversationId}, CoachClientId={conversation.CoachClientId}");
+        
+        if (conversation.CoachClient == null)
+        {
+            _logger.LogError($"CoachClient is null for conversation {conversationId}. CoachClientId in DB: {conversation.CoachClientId}. This indicates a database integrity issue - the CoachClient with ID {conversation.CoachClientId} does not exist or was not loaded properly.");
+            throw new InvalidOperationException($"Database integrity error: Conversation {conversationId} references CoachClient {conversation.CoachClientId} which does not exist or could not be loaded. Please check your database.");
+        }
+
+        _logger.LogInformation($"CoachClient loaded: CoachId={conversation.CoachClient.CoachId}, AdherentId={conversation.CoachClient.AdherentId}");
 
         bool hasAccess = userType == SenderType.Coach
             ? conversation.CoachClient.CoachId == userId
             : conversation.CoachClient.AdherentId == userId;
 
+        _logger.LogInformation($"Access check: hasAccess={hasAccess}, userType={userType}, userId={userId}");
+
         if (!hasAccess)
+        {
+            _logger.LogWarning($"User {userId} ({userType}) denied access to conversation {conversationId}. Conversation belongs to Coach {conversation.CoachClient.CoachId} and Adherent {conversation.CoachClient.AdherentId}");
             throw new UnauthorizedAccessException("You don't have access to this conversation");
+        }
 
         return await _messageRepository.GetMessagesByConversationIdAsync(conversationId);
     }

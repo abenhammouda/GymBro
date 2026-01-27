@@ -39,13 +39,20 @@ export interface Adherent {
     updatedAt: string;
 }
 
+export type ProgramStatus = 'Active' | 'Draft' | 'Completed' | 'Cancelled';
+
 export interface Program {
-    id: number;
+    programId: number;
     name: string;
     description?: string;
-    duration?: number; // in weeks
-    difficulty?: 'Beginner' | 'Intermediate' | 'Advanced';
-    createdBy: number; // Coach ID
+    status: ProgramStatus;
+    startDate?: string;
+    endDate?: string;
+    duration: number; // in weeks
+    currentWeek?: number;
+    coverImageUrl?: string;
+    coachId: number;
+    clientsAssigned: number;
     createdAt: string;
     updatedAt: string;
 }
@@ -224,3 +231,76 @@ export interface ConversationListItem {
     unreadCount: number;
     lastMessageAt?: string;
 }
+
+// ==========================================
+// Exercise Library Types
+// ==========================================
+
+export type ExerciseCategory =
+    | 'UpperBody'
+    | 'LowerBody'
+    | 'Back'
+    | 'Core'
+    | 'Cardio'
+    | 'Flexibility'
+    | 'Other';
+
+export interface ExerciseTemplate {
+    exerciseTemplateId: number;
+    name: string;
+    description?: string;
+    category: ExerciseCategory;
+    equipment?: string;
+    videoUrl?: string;
+    thumbnailUrl?: string;
+    duration: number; // in seconds
+    instructions?: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface CreateExerciseTemplateRequest {
+    name: string;
+    category: ExerciseCategory;
+    description?: string;
+    equipment?: string;
+    instructions?: string;
+    videoUrl?: string;
+}
+
+export interface UpdateExerciseTemplateRequest {
+    name: string;
+    category: ExerciseCategory;
+    description?: string;
+    equipment?: string;
+    instructions?: string;
+    videoUrl?: string;
+}
+
+export interface ExerciseSuggestion {
+    name: string;
+    category?: string;
+}
+
+// ==========================================
+// Program DTOs
+// ==========================================
+
+export interface CreateProgramRequest {
+    name: string;
+    description?: string;
+    status: ProgramStatus;
+    startDate?: string;
+    endDate?: string;
+    duration: number;
+}
+
+export interface UpdateProgramRequest {
+    name: string;
+    description?: string;
+    status: ProgramStatus;
+    startDate?: string;
+    endDate?: string;
+    duration: number;
+}
+

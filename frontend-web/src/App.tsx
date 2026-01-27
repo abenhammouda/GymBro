@@ -5,6 +5,8 @@ import LoginPage from './pages/auth/LoginPage';
 import SignUpPage from './pages/auth/SignUpPage';
 import VerificationPage from './pages/auth/VerificationPage';
 import DashboardPage from './pages/DashboardPage';
+import ExerciseLibraryPage from './pages/ExerciseLibraryPage';
+import ProgramsPage from './pages/ProgramsPage';
 import './App.css';
 
 
@@ -19,20 +21,6 @@ const ClientsPage = () => (
 const CalendarPage = () => (
   <div style={{ padding: '2rem' }}>
     <h1>Calendar Page</h1>
-    <p>Coming soon...</p>
-  </div>
-);
-
-const ProgramsPage = () => (
-  <div style={{ padding: '2rem' }}>
-    <h1>Programs Page</h1>
-    <p>Coming soon...</p>
-  </div>
-);
-
-const ExercisesPage = () => (
-  <div style={{ padding: '2rem' }}>
-    <h1>Exercise Library</h1>
     <p>Coming soon...</p>
   </div>
 );
@@ -84,7 +72,7 @@ function App() {
             path="/exercises"
             element={
               <ProtectedRoute>
-                <ExercisesPage />
+                <ExerciseLibraryPage />
               </ProtectedRoute>
             }
           />

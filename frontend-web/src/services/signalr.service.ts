@@ -31,8 +31,7 @@ class SignalRService {
 
             this.connection = new signalR.HubConnectionBuilder()
                 .withUrl(`${apiUrl}/hubs/message`, {
-                    // Temporarily remove token to test basic connectivity
-                    // accessTokenFactory: () => token,
+                    accessTokenFactory: () => token,
                     skipNegotiation: false,
                     transport: signalR.HttpTransportType.WebSockets | signalR.HttpTransportType.ServerSentEvents | signalR.HttpTransportType.LongPolling
                 })
@@ -46,6 +45,11 @@ class SignalRService {
 
             this.connection.onreconnected(() => {
                 console.log('SignalR reconnected');
+            });
+
+            // Handle errors from server
+            this.connection.on('Error', (errorMessage: string) => {
+                console.error('SignalR server error:', errorMessage);
             });
 
             this.connection.onclose(() => {

@@ -43,6 +43,12 @@ public class CoachingDbContext : DbContext
     // Authentication
     public DbSet<RefreshToken> RefreshTokens { get; set; }
 
+    // Exercise Library
+    public DbSet<ExerciseTemplate> ExerciseTemplates { get; set; }
+
+    // Program Templates
+    public DbSet<ProgramTemplate> ProgramTemplates { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -121,6 +127,8 @@ public class CoachingDbContext : DbContext
         modelBuilder.Entity<MessageAttachment>().HasKey(ma => ma.AttachmentId);
         modelBuilder.Entity<CalendarItem>().HasKey(ci => ci.CalendarItemId);
         modelBuilder.Entity<RefreshToken>().HasKey(rt => rt.RefreshTokenId);
+        modelBuilder.Entity<ExerciseTemplate>().HasKey(et => et.ExerciseTemplateId);
+        modelBuilder.Entity<ProgramTemplate>().HasKey(pt => pt.ProgramTemplateId);
 
         // Seed initial data
         modelBuilder.Entity<SubscriptionTier>().HasData(

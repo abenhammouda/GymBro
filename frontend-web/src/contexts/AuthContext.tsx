@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import type { User } from '../types';
 import authService from '../services/auth.service';
+import signalRService from '../services/signalr.service';
 
 interface AuthContextType {
     user: User | null;
@@ -49,6 +50,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
 
     const logout = () => {
+        // Disconnect SignalR before logging out
+        signalRService.disconnect();
         authService.logout();
         setUser(null);
     };

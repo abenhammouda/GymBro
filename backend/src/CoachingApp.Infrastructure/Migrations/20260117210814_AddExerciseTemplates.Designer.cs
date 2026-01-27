@@ -4,6 +4,7 @@ using CoachingApp.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CoachingApp.Infrastructure.Migrations
 {
     [DbContext(typeof(CoachingDbContext))]
-    partial class CoachingDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260117210814_AddExerciseTemplates")]
+    partial class AddExerciseTemplates
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -351,7 +354,7 @@ namespace CoachingApp.Infrastructure.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("Duration")
+                    b.Property<int>("Duration")
                         .HasColumnType("int");
 
                     b.Property<string>("Equipment")
@@ -628,58 +631,6 @@ namespace CoachingApp.Infrastructure.Migrations
                     b.HasIndex("ProgramId");
 
                     b.ToTable("ProgramDays");
-                });
-
-            modelBuilder.Entity("CoachingApp.Core.Entities.ProgramTemplate", b =>
-                {
-                    b.Property<int>("ProgramTemplateId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ProgramTemplateId"));
-
-                    b.Property<int>("CoachId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("CoverImageFileName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("CoverImageUrl")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int?>("CurrentWeek")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Duration")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("EndDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("StartDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("ProgramTemplateId");
-
-                    b.HasIndex("CoachId");
-
-                    b.ToTable("ProgramTemplates");
                 });
 
             modelBuilder.Entity("CoachingApp.Core.Entities.ProgressPhoto", b =>
@@ -1070,17 +1021,6 @@ namespace CoachingApp.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Program");
-                });
-
-            modelBuilder.Entity("CoachingApp.Core.Entities.ProgramTemplate", b =>
-                {
-                    b.HasOne("CoachingApp.Core.Entities.Coach", "Coach")
-                        .WithMany()
-                        .HasForeignKey("CoachId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Coach");
                 });
 
             modelBuilder.Entity("CoachingApp.Core.Entities.ProgressPhoto", b =>

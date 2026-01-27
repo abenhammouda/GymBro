@@ -114,8 +114,10 @@ class AuthService {
      */
     logout(): void {
         localStorage.removeItem('authToken');
+        localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('user');
+        localStorage.removeItem('userType');
     }
 
     /**
