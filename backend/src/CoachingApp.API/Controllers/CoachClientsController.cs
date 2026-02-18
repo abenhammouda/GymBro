@@ -105,6 +105,45 @@ public class CoachClientsController : ControllerBase
             return StatusCode(500, new { message = "An error occurred" });
         }
     }
+
+    [HttpGet("my-clients")]
+    public async Task<IActionResult> GetMyClients()
+    {
+        try
+        {
+            var coachIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+            if (coachIdClaim == null)
+            {
+                return Unauthorized();
+            }
+
+            var coachId = int.Parse(coachIdClaim.Value);
+
+            var clients = await _context.CoachClients
+                .Include(cc => cc.Adherent)
+                .Where(cc => cc.CoachId == coachId && cc.Status == CoachClientStatus.Active)
+                .Select(cc => new
+                {
+                    adherentId = cc.Adherent.AdherentId,
+                    name = cc.Adherent.Name,
+                    email = cc.Adherent.Email,
+                    phoneNumber = cc.Adherent.PhoneNumber,
+                    profilePicture = cc.Adherent.ProfilePicture,
+                    age = cc.Adherent.DateOfBirth.HasValue 
+                        ? DateTime.UtcNow.Year - cc.Adherent.DateOfBirth.Value.Year 
+                        : (int?)null,
+                    goal = cc.GoalSummary
+                })
+                .ToListAsync();
+
+            return Ok(clients);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting coach's clients");
+            return StatusCode(500, new { message = "An error occurred" });
+        }
+    }
 }
 
 public class CreateCoachClientRequest

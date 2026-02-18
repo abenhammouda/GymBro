@@ -25,6 +25,8 @@ public class CoachingDbContext : DbContext
     public DbSet<Exercise> Exercises { get; set; }
     public DbSet<MealPlan> MealPlans { get; set; }
     public DbSet<Meal> Meals { get; set; }
+    public DbSet<MealTab> MealTabs { get; set; }
+    public DbSet<MealIngredient> MealIngredients { get; set; }
 
     // Progress Tracking
     public DbSet<ProgressReport> ProgressReports { get; set; }
@@ -48,6 +50,21 @@ public class CoachingDbContext : DbContext
 
     // Program Templates
     public DbSet<ProgramTemplate> ProgramTemplates { get; set; }
+
+    // Workout Session Exercises
+    public DbSet<WorkoutSessionExercise> WorkoutSessionExercises { get; set; }
+
+    // Workout Session Clients
+    public DbSet<WorkoutSessionClient> WorkoutSessionClients { get; set; }
+
+    // Scheduled Workout Sessions
+    public DbSet<ScheduledWorkoutSession> ScheduledWorkoutSessions { get; set; }
+
+    // Scheduled Meals
+    public DbSet<ScheduledMeal> ScheduledMeals { get; set; }
+
+    // Muscle Group Images
+    public DbSet<MuscleGroupImage> MuscleGroupImages { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -129,6 +146,89 @@ public class CoachingDbContext : DbContext
         modelBuilder.Entity<RefreshToken>().HasKey(rt => rt.RefreshTokenId);
         modelBuilder.Entity<ExerciseTemplate>().HasKey(et => et.ExerciseTemplateId);
         modelBuilder.Entity<ProgramTemplate>().HasKey(pt => pt.ProgramTemplateId);
+        modelBuilder.Entity<WorkoutSessionExercise>().HasKey(wse => wse.WorkoutSessionExerciseId);
+        modelBuilder.Entity<WorkoutSessionClient>().HasKey(wsc => wsc.WorkoutSessionClientId);
+        modelBuilder.Entity<MuscleGroupImage>().HasKey(mgi => mgi.MuscleGroupImageId);
+
+        // Configure WorkoutSessionClient relationships
+        modelBuilder.Entity<WorkoutSessionClient>()
+            .HasOne(wsc => wsc.WorkoutSession)
+            .WithMany(ws => ws.AssignedClients)
+            .HasForeignKey(wsc => wsc.WorkoutSessionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<WorkoutSessionClient>()
+            .HasOne(wsc => wsc.Adherent)
+            .WithMany()
+            .HasForeignKey(wsc => wsc.AdherentId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Configure ScheduledWorkoutSession relationships
+        modelBuilder.Entity<ScheduledWorkoutSession>().HasKey(sws => sws.ScheduledWorkoutSessionId);
+        
+        modelBuilder.Entity<ScheduledWorkoutSession>()
+            .HasOne(sws => sws.WorkoutSession)
+            .WithMany()
+            .HasForeignKey(sws => sws.WorkoutSessionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ScheduledWorkoutSession>()
+            .HasOne(sws => sws.Adherent)
+            .WithMany()
+            .HasForeignKey(sws => sws.AdherentId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ScheduledWorkoutSession>()
+            .Property(sws => sws.Status)
+            .HasMaxLength(50);
+
+        // Configure ScheduledMeal relationships
+        modelBuilder.Entity<ScheduledMeal>().HasKey(sm => sm.ScheduledMealId);
+        
+        modelBuilder.Entity<ScheduledMeal>()
+            .HasOne(sm => sm.Meal)
+            .WithMany()
+            .HasForeignKey(sm => sm.MealId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ScheduledMeal>()
+            .HasOne(sm => sm.Adherent)
+            .WithMany()
+            .HasForeignKey(sm => sm.AdherentId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ScheduledMeal>()
+            .Property(sm => sm.Status)
+            .HasMaxLength(50);
+
+        // Configure MealTab primary key
+        modelBuilder.Entity<MealTab>().HasKey(mt => mt.MealTabId);
+
+        // Configure MealTab relationships
+        modelBuilder.Entity<MealTab>()
+            .HasOne(mt => mt.Coach)
+            .WithMany()
+            .HasForeignKey(mt => mt.CoachId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Configure Meal relationships
+        modelBuilder.Entity<Meal>()
+            .HasOne(m => m.MealTab)
+            .WithMany(mt => mt.Meals)
+            .HasForeignKey(m => m.MealTabId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Configure MealIngredient relationships
+        modelBuilder.Entity<MealIngredient>()
+            .HasOne(mi => mi.Meal)
+            .WithMany(m => m.Ingredients)
+            .HasForeignKey(mi => mi.MealId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Configure decimal precision for ingredient quantity
+        modelBuilder.Entity<MealIngredient>()
+            .Property(mi => mi.QuantityGrams)
+            .HasPrecision(8, 2);
 
         // Seed initial data
         modelBuilder.Entity<SubscriptionTier>().HasData(

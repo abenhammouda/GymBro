@@ -342,6 +342,9 @@ namespace CoachingApp.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Category2")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("CoachId")
                         .HasColumnType("int");
 
@@ -391,32 +394,74 @@ namespace CoachingApp.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MealId"));
 
-                    b.Property<int?>("Calories")
-                        .HasColumnType("int");
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("IsCompleted")
-                        .HasColumnType("bit");
+                    b.Property<string>("ImageFileName")
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("MealPlanId")
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("MealPlanId")
                         .HasColumnType("int");
 
-                    b.Property<TimeSpan?>("MealTime")
-                        .HasColumnType("time");
-
-                    b.Property<int>("MealType")
+                    b.Property<int>("MealTabId")
                         .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("OrderIndex")
                         .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
 
                     b.HasKey("MealId");
 
                     b.HasIndex("MealPlanId");
 
+                    b.HasIndex("MealTabId");
+
                     b.ToTable("Meals");
+                });
+
+            modelBuilder.Entity("CoachingApp.Core.Entities.MealIngredient", b =>
+                {
+                    b.Property<int>("MealIngredientId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MealIngredientId"));
+
+                    b.Property<int>("MealId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("OrderIndex")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("QuantityGrams")
+                        .HasPrecision(8, 2)
+                        .HasColumnType("decimal(8,2)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("MealIngredientId");
+
+                    b.HasIndex("MealId");
+
+                    b.ToTable("MealIngredients");
                 });
 
             modelBuilder.Entity("CoachingApp.Core.Entities.MealPlan", b =>
@@ -450,6 +495,37 @@ namespace CoachingApp.Infrastructure.Migrations
                     b.HasIndex("ProgramDayId");
 
                     b.ToTable("MealPlans");
+                });
+
+            modelBuilder.Entity("CoachingApp.Core.Entities.MealTab", b =>
+                {
+                    b.Property<int>("MealTabId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MealTabId"));
+
+                    b.Property<int>("CoachId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("OrderIndex")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("MealTabId");
+
+                    b.HasIndex("CoachId");
+
+                    b.ToTable("MealTabs");
                 });
 
             modelBuilder.Entity("CoachingApp.Core.Entities.Message", b =>
@@ -521,6 +597,47 @@ namespace CoachingApp.Infrastructure.Migrations
                     b.HasIndex("MessageId");
 
                     b.ToTable("MessageAttachments");
+                });
+
+            modelBuilder.Entity("CoachingApp.Core.Entities.MuscleGroupImage", b =>
+                {
+                    b.Property<int>("MuscleGroupImageId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MuscleGroupImageId"));
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ImageFileName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("PexelsId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Photographer")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SourceUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("MuscleGroupImageId");
+
+                    b.ToTable("MuscleGroupImages");
                 });
 
             modelBuilder.Entity("CoachingApp.Core.Entities.Payment", b =>
@@ -785,6 +902,86 @@ namespace CoachingApp.Infrastructure.Migrations
                     b.ToTable("RefreshTokens");
                 });
 
+            modelBuilder.Entity("CoachingApp.Core.Entities.ScheduledMeal", b =>
+                {
+                    b.Property<int>("ScheduledMealId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ScheduledMealId"));
+
+                    b.Property<int>("AdherentId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("MealId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("ScheduledDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<TimeSpan?>("ScheduledTime")
+                        .HasColumnType("time");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("ScheduledMealId");
+
+                    b.HasIndex("AdherentId");
+
+                    b.HasIndex("MealId");
+
+                    b.ToTable("ScheduledMeals");
+                });
+
+            modelBuilder.Entity("CoachingApp.Core.Entities.ScheduledWorkoutSession", b =>
+                {
+                    b.Property<int>("ScheduledWorkoutSessionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ScheduledWorkoutSessionId"));
+
+                    b.Property<int>("AdherentId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ScheduledDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<TimeSpan?>("ScheduledTime")
+                        .HasColumnType("time");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("WorkoutSessionId")
+                        .HasColumnType("int");
+
+                    b.HasKey("ScheduledWorkoutSessionId");
+
+                    b.HasIndex("AdherentId");
+
+                    b.HasIndex("WorkoutSessionId");
+
+                    b.ToTable("ScheduledWorkoutSessions");
+                });
+
             modelBuilder.Entity("CoachingApp.Core.Entities.SubscriptionTier", b =>
                 {
                     b.Property<int>("SubscriptionTierId")
@@ -878,30 +1075,125 @@ namespace CoachingApp.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("WorkoutSessionId"));
 
-                    b.Property<DateTime?>("CompletedAt")
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("CoachId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CoverImageFileName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CoverImageUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("IsCompleted")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Notes")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("ProgramDayId")
+                    b.Property<int?>("Duration")
                         .HasColumnType("int");
 
-                    b.Property<string>("Title")
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
                         .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("ProgramDayId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("VoiceMessageFileName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("VoiceMessageUrl")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("WorkoutSessionId");
 
+                    b.HasIndex("CoachId");
+
                     b.HasIndex("ProgramDayId");
 
                     b.ToTable("WorkoutSessions");
+                });
+
+            modelBuilder.Entity("CoachingApp.Core.Entities.WorkoutSessionClient", b =>
+                {
+                    b.Property<int>("WorkoutSessionClientId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("WorkoutSessionClientId"));
+
+                    b.Property<int>("AdherentId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("AssignedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("WorkoutSessionId")
+                        .HasColumnType("int");
+
+                    b.HasKey("WorkoutSessionClientId");
+
+                    b.HasIndex("AdherentId");
+
+                    b.HasIndex("WorkoutSessionId");
+
+                    b.ToTable("WorkoutSessionClients");
+                });
+
+            modelBuilder.Entity("CoachingApp.Core.Entities.WorkoutSessionExercise", b =>
+                {
+                    b.Property<int>("WorkoutSessionExerciseId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("WorkoutSessionExerciseId"));
+
+                    b.Property<int>("ExerciseTemplateId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("OrderIndex")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Reps")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RestSeconds")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Sets")
+                        .HasColumnType("int");
+
+                    b.Property<int>("WorkoutSessionId")
+                        .HasColumnType("int");
+
+                    b.HasKey("WorkoutSessionExerciseId");
+
+                    b.HasIndex("ExerciseTemplateId");
+
+                    b.HasIndex("WorkoutSessionId");
+
+                    b.ToTable("WorkoutSessionExercises");
                 });
 
             modelBuilder.Entity("CoachingApp.Core.Entities.BodyMeasurements", b =>
@@ -968,7 +1260,7 @@ namespace CoachingApp.Infrastructure.Migrations
             modelBuilder.Entity("CoachingApp.Core.Entities.Exercise", b =>
                 {
                     b.HasOne("CoachingApp.Core.Entities.WorkoutSession", "WorkoutSession")
-                        .WithMany("Exercises")
+                        .WithMany()
                         .HasForeignKey("WorkoutSessionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -989,13 +1281,28 @@ namespace CoachingApp.Infrastructure.Migrations
 
             modelBuilder.Entity("CoachingApp.Core.Entities.Meal", b =>
                 {
-                    b.HasOne("CoachingApp.Core.Entities.MealPlan", "MealPlan")
+                    b.HasOne("CoachingApp.Core.Entities.MealPlan", null)
                         .WithMany("Meals")
-                        .HasForeignKey("MealPlanId")
+                        .HasForeignKey("MealPlanId");
+
+                    b.HasOne("CoachingApp.Core.Entities.MealTab", "MealTab")
+                        .WithMany("Meals")
+                        .HasForeignKey("MealTabId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("MealPlan");
+                    b.Navigation("MealTab");
+                });
+
+            modelBuilder.Entity("CoachingApp.Core.Entities.MealIngredient", b =>
+                {
+                    b.HasOne("CoachingApp.Core.Entities.Meal", "Meal")
+                        .WithMany("Ingredients")
+                        .HasForeignKey("MealId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Meal");
                 });
 
             modelBuilder.Entity("CoachingApp.Core.Entities.MealPlan", b =>
@@ -1007,6 +1314,17 @@ namespace CoachingApp.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("ProgramDay");
+                });
+
+            modelBuilder.Entity("CoachingApp.Core.Entities.MealTab", b =>
+                {
+                    b.HasOne("CoachingApp.Core.Entities.Coach", "Coach")
+                        .WithMany()
+                        .HasForeignKey("CoachId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Coach");
                 });
 
             modelBuilder.Entity("CoachingApp.Core.Entities.Message", b =>
@@ -1105,6 +1423,44 @@ namespace CoachingApp.Infrastructure.Migrations
                     b.Navigation("Program");
                 });
 
+            modelBuilder.Entity("CoachingApp.Core.Entities.ScheduledMeal", b =>
+                {
+                    b.HasOne("CoachingApp.Core.Entities.Adherent", "Adherent")
+                        .WithMany()
+                        .HasForeignKey("AdherentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CoachingApp.Core.Entities.Meal", "Meal")
+                        .WithMany()
+                        .HasForeignKey("MealId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Adherent");
+
+                    b.Navigation("Meal");
+                });
+
+            modelBuilder.Entity("CoachingApp.Core.Entities.ScheduledWorkoutSession", b =>
+                {
+                    b.HasOne("CoachingApp.Core.Entities.Adherent", "Adherent")
+                        .WithMany()
+                        .HasForeignKey("AdherentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CoachingApp.Core.Entities.WorkoutSession", "WorkoutSession")
+                        .WithMany()
+                        .HasForeignKey("WorkoutSessionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Adherent");
+
+                    b.Navigation("WorkoutSession");
+                });
+
             modelBuilder.Entity("CoachingApp.Core.Entities.WeightLog", b =>
                 {
                     b.HasOne("CoachingApp.Core.Entities.Adherent", "Adherent")
@@ -1118,13 +1474,55 @@ namespace CoachingApp.Infrastructure.Migrations
 
             modelBuilder.Entity("CoachingApp.Core.Entities.WorkoutSession", b =>
                 {
-                    b.HasOne("CoachingApp.Core.Entities.ProgramDay", "ProgramDay")
-                        .WithMany("WorkoutSessions")
-                        .HasForeignKey("ProgramDayId")
+                    b.HasOne("CoachingApp.Core.Entities.Coach", "Coach")
+                        .WithMany()
+                        .HasForeignKey("CoachId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("ProgramDay");
+                    b.HasOne("CoachingApp.Core.Entities.ProgramDay", null)
+                        .WithMany("WorkoutSessions")
+                        .HasForeignKey("ProgramDayId");
+
+                    b.Navigation("Coach");
+                });
+
+            modelBuilder.Entity("CoachingApp.Core.Entities.WorkoutSessionClient", b =>
+                {
+                    b.HasOne("CoachingApp.Core.Entities.Adherent", "Adherent")
+                        .WithMany()
+                        .HasForeignKey("AdherentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CoachingApp.Core.Entities.WorkoutSession", "WorkoutSession")
+                        .WithMany("AssignedClients")
+                        .HasForeignKey("WorkoutSessionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Adherent");
+
+                    b.Navigation("WorkoutSession");
+                });
+
+            modelBuilder.Entity("CoachingApp.Core.Entities.WorkoutSessionExercise", b =>
+                {
+                    b.HasOne("CoachingApp.Core.Entities.ExerciseTemplate", "ExerciseTemplate")
+                        .WithMany()
+                        .HasForeignKey("ExerciseTemplateId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CoachingApp.Core.Entities.WorkoutSession", "WorkoutSession")
+                        .WithMany("Exercises")
+                        .HasForeignKey("WorkoutSessionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ExerciseTemplate");
+
+                    b.Navigation("WorkoutSession");
                 });
 
             modelBuilder.Entity("CoachingApp.Core.Entities.Adherent", b =>
@@ -1153,7 +1551,17 @@ namespace CoachingApp.Infrastructure.Migrations
                     b.Navigation("Messages");
                 });
 
+            modelBuilder.Entity("CoachingApp.Core.Entities.Meal", b =>
+                {
+                    b.Navigation("Ingredients");
+                });
+
             modelBuilder.Entity("CoachingApp.Core.Entities.MealPlan", b =>
+                {
+                    b.Navigation("Meals");
+                });
+
+            modelBuilder.Entity("CoachingApp.Core.Entities.MealTab", b =>
                 {
                     b.Navigation("Meals");
                 });
@@ -1191,6 +1599,8 @@ namespace CoachingApp.Infrastructure.Migrations
 
             modelBuilder.Entity("CoachingApp.Core.Entities.WorkoutSession", b =>
                 {
+                    b.Navigation("AssignedClients");
+
                     b.Navigation("Exercises");
                 });
 #pragma warning restore 612, 618

@@ -76,6 +76,7 @@ builder.Services.AddScoped<IMessageRepository, MessageRepository>();
 builder.Services.AddScoped<IConversationRepository, ConversationRepository>();
 builder.Services.AddScoped<IExerciseTemplateRepository, ExerciseTemplateRepository>();
 builder.Services.AddScoped<IProgramTemplateRepository, ProgramTemplateRepository>();
+builder.Services.AddScoped<IWorkoutSessionRepository, WorkoutSessionRepository>();
 
 // Register Exercise Template Service
 builder.Services.AddScoped<ExerciseTemplateService>();
@@ -83,12 +84,29 @@ builder.Services.AddScoped<ExerciseTemplateService>();
 // Register Program Template Service
 builder.Services.AddScoped<ProgramTemplateService>();
 
+// Register Workout Session Service
+builder.Services.AddScoped<WorkoutSessionService>();
+
+// Register Scheduled Workout Session Service
+builder.Services.AddScoped<IScheduledWorkoutSessionService, ScheduledWorkoutSessionService>();
+
+// Register Image Services
+builder.Services.AddHttpClient(); // Required for PexelsImageService
+builder.Services.AddScoped<PexelsImageService>();
+builder.Services.AddScoped<MuscleGroupImageService>();
+builder.Services.AddScoped<WorkoutImageAssignmentService>();
+
+// Register Meal Services
+builder.Services.AddScoped<MealTabService>();
+builder.Services.AddScoped<MealService>();
+builder.Services.AddScoped<IScheduledMealService, ScheduledMealService>();
+
 // Configure CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
     {
-        policy.WithOrigins("http://localhost:5173", "https://localhost:5173")
+        policy.WithOrigins("http://localhost:5173", "https://localhost:5173", "http://localhost:5174", "https://localhost:5174")
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials(); // Required for SignalR

@@ -7,6 +7,9 @@ import VerificationPage from './pages/auth/VerificationPage';
 import DashboardPage from './pages/DashboardPage';
 import ExerciseLibraryPage from './pages/ExerciseLibraryPage';
 import ProgramsPage from './pages/ProgramsPage';
+import WorkoutSessionsPage from './pages/WorkoutSessionsPage';
+import CalendarPage from './pages/CalendarPage';
+import MealsPage from './pages/MealsPage';
 import './App.css';
 
 
@@ -14,13 +17,6 @@ import './App.css';
 const ClientsPage = () => (
   <div style={{ padding: '2rem' }}>
     <h1>Clients Page</h1>
-    <p>Coming soon...</p>
-  </div>
-);
-
-const CalendarPage = () => (
-  <div style={{ padding: '2rem' }}>
-    <h1>Calendar Page</h1>
     <p>Coming soon...</p>
   </div>
 );
@@ -73,6 +69,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <ExerciseLibraryPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/workouts"
+            element={
+              <ProtectedRoute>
+                <WorkoutSessionsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/meals"
+            element={
+              <ProtectedRoute>
+                <MealsPage />
               </ProtectedRoute>
             }
           />

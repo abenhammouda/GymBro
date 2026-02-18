@@ -19,8 +19,7 @@ const ExerciseLibraryPage: React.FC = () => {
     const [selectedExercise, setSelectedExercise] = useState<ExerciseTemplate | null>(null);
     const [isViewerOpen, setIsViewerOpen] = useState(false);
     const [viewedExercise, setViewedExercise] = useState<ExerciseTemplate | null>(null);
-
-    const categories = ['All', 'Upper Body', 'Lower Body', 'Back', 'Core', 'Cardio', 'Flexibility', 'Other'];
+    const [playingExerciseId, setPlayingExerciseId] = useState<number | null>(null);
 
     useEffect(() => {
         loadExercises();
@@ -47,7 +46,13 @@ const ExerciseLibraryPage: React.FC = () => {
 
         // Filter by category
         if (selectedCategory !== 'All') {
-            filtered = filtered.filter(ex => ex.category === selectedCategory.replace(' ', ''));
+            filtered = filtered.filter(ex => {
+                // Check if it matches the primary category
+                if (ex.category === selectedCategory) return true;
+                // Check if it matches the secondary category (Upper Body or Lower Body)
+                if (ex.category2 === selectedCategory.replace(' ', '')) return true;
+                return false;
+            });
         }
 
         // Filter by search query
@@ -69,10 +74,11 @@ const ExerciseLibraryPage: React.FC = () => {
     };
 
     const getCategoryBadgeClass = (category: ExerciseCategory): string => {
-        const categoryMap: Record<ExerciseCategory, string> = {
-            'UpperBody': 'upper-body',
-            'LowerBody': 'lower-body',
-            'Back': 'back',
+        const categoryMap: Record<string, string> = {
+            'Pectoraux': 'pectoraux',
+            'Épaules': 'epaules',
+            'Dos': 'dos',
+            'Jambes': 'jambes',
             'Core': 'core',
             'Cardio': 'cardio',
             'Flexibility': 'flexibility',
@@ -129,8 +135,8 @@ const ExerciseLibraryPage: React.FC = () => {
     const getYouTubeEmbedUrl = (url: string): string | null => {
         if (!url) return null;
 
-        // Extract video ID from various YouTube URL formats
-        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+        // Extract video ID from various YouTube URL formats including Shorts
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|shorts\/)([^#&?]*).*/;
         const match = url.match(regExp);
 
         if (match && match[2].length === 11) {
@@ -138,6 +144,25 @@ const ExerciseLibraryPage: React.FC = () => {
             return `https://www.youtube.com/embed/${match[2]}`;
         }
 
+        return null;
+    };
+
+    const getYouTubeVideoId = (url: string): string | null => {
+        if (!url) return null;
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|shorts\/)([^#&?]*).*/;
+        const match = url.match(regExp);
+        if (match && match[2].length === 11) {
+            return match[2];
+        }
+        return null;
+    };
+
+    const getYouTubeThumbnail = (url: string): string | null => {
+        const videoId = getYouTubeVideoId(url);
+        if (videoId) {
+            // Use maxresdefault for best quality, fallback to hqdefault if needed
+            return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+        }
         return null;
     };
 
@@ -165,15 +190,31 @@ const ExerciseLibraryPage: React.FC = () => {
                     </div>
 
                     <div className="category-filters">
-                        {categories.map(category => (
-                            <button
-                                key={category}
-                                className={`category-btn ${selectedCategory === category ? 'active' : ''}`}
-                                onClick={() => setSelectedCategory(category)}
-                            >
-                                {category}
-                            </button>
-                        ))}
+                        {/* First row: General categories */}
+                        <div className="category-row">
+                            {['All', 'Upper Body', 'Lower Body', 'Legs'].map(category => (
+                                <button
+                                    key={category}
+                                    className={`category-btn ${selectedCategory === category ? 'active' : ''}`}
+                                    onClick={() => setSelectedCategory(category)}
+                                >
+                                    {category}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Second row: Specific muscle groups */}
+                        <div className="category-row">
+                            {['Pectoraux', 'Épaules', 'Dos', 'Core', 'Cardio', 'Flexibility', 'Other'].map(category => (
+                                <button
+                                    key={category}
+                                    className={`category-btn ${selectedCategory === category ? 'active' : ''}`}
+                                    onClick={() => setSelectedCategory(category)}
+                                >
+                                    {category}
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 </div>
 
@@ -207,29 +248,57 @@ const ExerciseLibraryPage: React.FC = () => {
                                             );
                                         }
 
-                                        // Check if it's a YouTube URL
-                                        const youtubeEmbedUrl = getYouTubeEmbedUrl(exercise.videoUrl);
+                                        // Check if this exercise is currently playing
+                                        const isPlaying = playingExerciseId === exercise.exerciseTemplateId;
 
-                                        if (youtubeEmbedUrl) {
-                                            return (
-                                                <iframe
-                                                    src={youtubeEmbedUrl}
-                                                    title={exercise.name}
-                                                    frameBorder="0"
-                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                    allowFullScreen
-                                                    className="youtube-embed"
-                                                />
-                                            );
+                                        if (isPlaying) {
+                                            // Show inline video player
+                                            const youtubeEmbedUrl = getYouTubeEmbedUrl(exercise.videoUrl);
+
+                                            if (youtubeEmbedUrl) {
+                                                return (
+                                                    <iframe
+                                                        src={`${youtubeEmbedUrl}?autoplay=1`}
+                                                        title={exercise.name}
+                                                        frameBorder="0"
+                                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                        allowFullScreen
+                                                        className="youtube-embed"
+                                                    />
+                                                );
+                                            } else {
+                                                return (
+                                                    <video
+                                                        src={`${import.meta.env.VITE_API_URL}${exercise.videoUrl}`}
+                                                        controls
+                                                        autoPlay
+                                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                    />
+                                                );
+                                            }
                                         }
 
-                                        // Otherwise it's an uploaded video
+
+                                        // Show custom thumbnail
+                                        const youtubeThumbnail = getYouTubeThumbnail(exercise.videoUrl);
                                         return (
-                                            <video
-                                                src={`${import.meta.env.VITE_API_URL}${exercise.videoUrl}`}
-                                                poster={exercise.thumbnailUrl ? `${import.meta.env.VITE_API_URL}${exercise.thumbnailUrl}` : undefined}
-                                                controls
-                                            />
+                                            <div
+                                                className="video-thumbnail-custom"
+                                                style={{ cursor: 'pointer', backgroundImage: youtubeThumbnail ? `url(${youtubeThumbnail})` : undefined, backgroundSize: 'cover', backgroundPosition: 'center' }}
+                                            >
+                                                <div className="thumbnail-letter">
+                                                    {exercise.name.charAt(0).toUpperCase()}
+                                                </div>
+                                                <div
+                                                    className="play-overlay"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setPlayingExerciseId(exercise.exerciseTemplateId);
+                                                    }}
+                                                >
+                                                    <div className="play-icon">▶</div>
+                                                </div>
+                                            </div>
                                         );
                                     })()}
                                 </div>
@@ -252,7 +321,7 @@ const ExerciseLibraryPage: React.FC = () => {
                                         <span className={`category-badge ${getCategoryBadgeClass(exercise.category)}`}>
                                             {exercise.category.replace(/([A-Z])/g, ' $1').trim()}
                                         </span>
-                                        {exercise.duration > 0 && (
+                                        {exercise.duration && exercise.duration > 0 && (
                                             <span className="duration">{formatDuration(exercise.duration)}</span>
                                         )}
                                     </div>

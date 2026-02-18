@@ -15,8 +15,8 @@ const ExerciseViewerModal: React.FC<ExerciseViewerModalProps> = ({ isOpen, onClo
     const getYouTubeEmbedUrl = (url: string): string | null => {
         if (!url) return null;
 
-        // Extract video ID from various YouTube URL formats
-        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+        // Extract video ID from various YouTube URL formats including Shorts
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|shorts\/)([^#&?]*).*/;
         const match = url.match(regExp);
 
         if (match && match[2].length === 11) {

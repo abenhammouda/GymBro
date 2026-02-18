@@ -1,0 +1,317 @@
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+}
+
+.modal-content {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.create-workout-modal {
+    width: 90%;
+    max-width: 700px;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.modal-header h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1a202c;
+    margin: 0;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #718096;
+    padding: 0.5rem;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.close-btn:hover {
+    background: #f7fafc;
+    color: #2d3748;
+}
+
+.modal-body {
+    padding: 2rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+}
+
+.form-input,
+.form-select,
+.form-select-multiple {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.2s;
+    font-family: inherit;
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-select-multiple:focus {
+    outline: none;
+    border-color: #4A90E2;
+}
+
+.form-select {
+    background: white;
+    cursor: pointer;
+}
+
+.form-select-multiple {
+    background: white;
+    cursor: pointer;
+    min-height: 200px;
+}
+
+.form-select-multiple option {
+    padding: 0.5rem;
+    cursor: pointer;
+}
+
+.form-select-multiple option:checked {
+    background: #4A90E2;
+    color: white;
+}
+
+.no-exercises {
+    text-align: center;
+    color: #a0aec0;
+    padding: 2rem;
+    background: #f7fafc;
+    border-radius: 8px;
+    border: 2px dashed #e2e8f0;
+}
+
+/* Configuration des exercices */
+.configured-exercises-section {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 2px solid #e2e8f0;
+}
+
+.configured-exercises-section h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin: 0 0 1rem 0;
+}
+
+.configured-exercises-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.configured-exercise-card {
+    background: #f7fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 1rem;
+}
+
+.exercise-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.exercise-title {
+    font-weight: 600;
+    color: #2d3748;
+}
+
+.remove-btn {
+    background: none;
+    border: none;
+    color: #fc8181;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.remove-btn:hover {
+    background: #fff5f5;
+}
+
+.exercise-params {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+}
+
+.param-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.param-group label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #718096;
+    text-transform: uppercase;
+}
+
+.number-input {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.25rem;
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 0.25rem;
+    width: 100%;
+}
+
+.number-input button {
+    background: #f7fafc;
+    border: none;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-weight: 600;
+    color: #4A90E2;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.number-input button:hover {
+    background: #4A90E2;
+    color: white;
+}
+
+.number-input input {
+    width: 30px;
+    min-width: 0;
+    border: none;
+    text-align: center;
+    font-weight: 600;
+    color: #2d3748;
+    background: transparent;
+    padding: 0;
+}
+
+.number-input input:focus {
+    outline: none;
+}
+
+.rest-input {
+    padding: 0.5rem;
+}
+
+.rest-display {
+    flex: 1;
+    text-align: center;
+    font-weight: 600;
+    color: #2d3748;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    padding: 1.5rem 2rem;
+    border-top: 2px solid #e2e8f0;
+}
+
+.btn-cancel,
+.btn-save {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-cancel {
+    background: white;
+    border: 2px solid #e2e8f0;
+    color: #4a5568;
+}
+
+.btn-cancel:hover {
+    background: #f7fafc;
+    border-color: #cbd5e0;
+}
+
+.btn-save {
+    background: #4A90E2;
+    border: none;
+    color: white;
+}
+
+.btn-save:hover:not(:disabled) {
+    background: #357ABD;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+}
+
+.btn-save:disabled {
+    background: #cbd5e0;
+    cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .create-workout-modal {
+        width: 95%;
+    }
+
+    .exercise-params {
+        grid-template-columns: 1fr;
+    }
+}

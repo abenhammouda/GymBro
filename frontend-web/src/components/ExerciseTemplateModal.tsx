@@ -19,7 +19,7 @@ const ExerciseTemplateModal: React.FC<ExerciseTemplateModalProps> = ({
 }) => {
     const [formData, setFormData] = useState({
         name: '',
-        category: 'UpperBody' as ExerciseCategory,
+        category: 'Pectoraux' as ExerciseCategory,
         description: '',
         equipment: '',
         instructions: '',
@@ -53,7 +53,7 @@ const ExerciseTemplateModal: React.FC<ExerciseTemplateModalProps> = ({
     const resetForm = () => {
         setFormData({
             name: '',
-            category: 'UpperBody',
+            category: 'Pectoraux',
             description: '',
             equipment: '',
             instructions: '',
@@ -148,9 +148,11 @@ const ExerciseTemplateModal: React.FC<ExerciseTemplateModalProps> = ({
                             value={formData.category}
                             onChange={handleInputChange}
                         >
-                            <option value="UpperBody">Pectoraux</option>
-                            <option value="LowerBody">Jambes</option>
-                            <option value="Core">Abdominaux</option>
+                            <option value="Pectoraux">Pectoraux</option>
+                            <option value="Épaules">Épaules</option>
+                            <option value="Dos">Dos</option>
+                            <option value="Jambes">Jambes</option>
+                            <option value="Core">Core</option>
                             <option value="Cardio">Cardio</option>
                             <option value="Flexibility">Flexibilité</option>
                             <option value="Other">Autre</option>

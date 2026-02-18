@@ -8,7 +8,8 @@ namespace CoachingApp.Core.Entities
         public int CoachId { get; set; }
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
-        public string Category { get; set; } = string.Empty; // UpperBody, LowerBody, Core, Cardio, Flexibility, Other
+        public string Category { get; set; } = string.Empty; // Pectoraux, Épaules, Dos, Jambes, Core, Cardio, Flexibility, Other
+        public string? Category2 { get; set; } // UpperBody, LowerBody, or null (auto-assigned based on Category)
         public string? Equipment { get; set; }
         public string? VideoUrl { get; set; }
         public string? VideoFileName { get; set; }

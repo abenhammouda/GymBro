@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Users, Calendar, Dumbbell, FolderKanban } from 'lucide-react';
+import { LayoutDashboard, Users, Calendar, Dumbbell, FolderKanban, UtensilsCrossed } from 'lucide-react';
 import Avatar from '../ui/Avatar';
 import './Sidebar.css';
 
@@ -17,8 +17,10 @@ const Sidebar: React.FC<SidebarProps> = ({ user }) => {
         { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
         { path: '/clients', icon: Users, label: 'Clients' },
         { path: '/programs', icon: FolderKanban, label: 'Programs' },
+        { path: '/workouts', icon: Dumbbell, label: 'Workout Sessions' },
         { path: '/calendar', icon: Calendar, label: 'Calendar' },
         { path: '/exercises', icon: Dumbbell, label: 'Exercise Library' },
+        { path: '/meals', icon: UtensilsCrossed, label: 'Meals' },
     ];
 
     return (

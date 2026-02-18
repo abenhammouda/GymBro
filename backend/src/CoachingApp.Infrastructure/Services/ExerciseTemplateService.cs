@@ -45,6 +45,7 @@ namespace CoachingApp.Infrastructure.Services
                 CoachId = coachId,
                 Name = request.Name,
                 Category = request.Category,
+                Category2 = GetCategory2(request.Category),
                 Description = request.Description,
                 Equipment = request.Equipment,
                 Instructions = request.Instructions
@@ -79,6 +80,7 @@ namespace CoachingApp.Infrastructure.Services
 
             template.Name = request.Name;
             template.Category = request.Category;
+            template.Category2 = GetCategory2(request.Category);
             template.Description = request.Description;
             template.Equipment = request.Equipment;
             template.Instructions = request.Instructions;
@@ -176,6 +178,19 @@ namespace CoachingApp.Infrastructure.Services
             }
         }
 
+        private string? GetCategory2(string category)
+        {
+            // Auto-assign Category2 based on Category
+            return category switch
+            {
+                "Pectoraux" => "UpperBody",
+                "Épaules" => "UpperBody",
+                "Dos" => "UpperBody",
+                "Jambes" => "LowerBody",
+                _ => null // Core, Cardio, Flexibility, Other
+            };
+        }
+
         private ExerciseTemplateResponse MapToResponse(ExerciseTemplate template)
         {
             return new ExerciseTemplateResponse
@@ -184,6 +199,7 @@ namespace CoachingApp.Infrastructure.Services
                 Name = template.Name,
                 Description = template.Description,
                 Category = template.Category,
+                Category2 = template.Category2,
                 Equipment = template.Equipment,
                 VideoUrl = template.VideoUrl,
                 ThumbnailUrl = template.ThumbnailUrl,

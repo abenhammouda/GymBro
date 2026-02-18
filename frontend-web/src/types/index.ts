@@ -235,25 +235,29 @@ export interface ConversationListItem {
 // ==========================================
 // Exercise Library Types
 // ==========================================
-
+// Exercise Template Types
 export type ExerciseCategory =
-    | 'UpperBody'
-    | 'LowerBody'
-    | 'Back'
+    | 'Pectoraux'
+    | 'Épaules'
+    | 'Dos'
+    | 'Jambes'
     | 'Core'
     | 'Cardio'
     | 'Flexibility'
     | 'Other';
+
+export type ExerciseCategory2 = 'UpperBody' | 'LowerBody' | null;
 
 export interface ExerciseTemplate {
     exerciseTemplateId: number;
     name: string;
     description?: string;
     category: ExerciseCategory;
+    category2?: ExerciseCategory2;
     equipment?: string;
     videoUrl?: string;
     thumbnailUrl?: string;
-    duration: number; // in seconds
+    duration?: number; // in seconds
     instructions?: string;
     createdAt: string;
     updatedAt: string;
@@ -304,3 +308,214 @@ export interface UpdateProgramRequest {
     duration: number;
 }
 
+
+// ==========================================
+// Workout Session Types
+// ==========================================
+
+export type WorkoutSessionStatus = 'Active' | 'Draft' | 'Archived';
+
+export interface WorkoutSessionExercise {
+    workoutSessionExerciseId: number;
+    exerciseTemplateId: number;
+    exerciseName: string;
+    exerciseCategory?: string;
+    exerciseVideoUrl?: string;
+    exerciseThumbnailUrl?: string;
+    orderIndex: number;
+    sets: number;
+    reps: number;
+    restSeconds: number;
+    notes?: string;
+}
+
+export interface WorkoutSession {
+    workoutSessionId: number;
+    name: string;
+    description?: string;
+    voiceMessageUrl?: string;
+    coverImageUrl?: string;
+    category: string;
+    status: WorkoutSessionStatus;
+    duration?: number;
+    startDate?: string;
+    endDate?: string;
+    exerciseCount: number;
+    exercises: WorkoutSessionExercise[];
+    assignedClients?: AssignedClient[];
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface CreateWorkoutSessionExerciseRequest {
+    exerciseTemplateId: number;
+    orderIndex: number;
+    sets: number;
+    reps: number;
+    restSeconds: number;
+    notes?: string;
+}
+
+export interface CreateWorkoutSessionRequest {
+    name: string;
+    description?: string;
+    category: string;
+    status: WorkoutSessionStatus;
+    startDate?: string;
+    endDate?: string;
+    exercises: CreateWorkoutSessionExerciseRequest[];
+}
+
+export interface UpdateWorkoutSessionRequest {
+    name: string;
+    description?: string;
+    category: string;
+    status: WorkoutSessionStatus;
+    startDate?: string;
+    endDate?: string;
+    exercises: CreateWorkoutSessionExerciseRequest[];
+}
+
+// ==========================================
+// Client Assignment Types
+// ==========================================
+
+export interface AssignedClient {
+    adherentId: number;
+    name: string;
+    email: string;
+    phoneNumber?: string;
+    profilePicture?: string;
+    age?: number;
+    goal?: string;
+}
+
+export interface AssignClientsRequest {
+    adherentIds: number[];
+}
+
+// ==========================================
+// Calendar Types
+// ==========================================
+
+export interface ScheduledWorkoutSession {
+    scheduledWorkoutSessionId: number;
+    workoutSessionId: number;
+    adherentId: number;
+    scheduledDate: string; // ISO date string
+    scheduledTime?: string; // HH:mm format
+    status: 'scheduled' | 'completed' | 'cancelled';
+    workoutSession?: WorkoutSession;
+    adherent?: AssignedClient;
+}
+
+export interface CreateScheduledWorkoutRequest {
+    workoutSessionId: number;
+    adherentId: number;
+    scheduledDate: string;
+    scheduledTime?: string;
+}
+
+export interface UpdateScheduledWorkoutRequest {
+    scheduledDate: string;
+    scheduledTime?: string;
+    status?: 'scheduled' | 'completed' | 'cancelled';
+}
+
+// ==========================================
+// Scheduled Meal Types
+// ==========================================
+
+export interface ScheduledMeal {
+    scheduledMealId: number;
+    mealId: number;
+    adherentId: number;
+    scheduledDate: string; // ISO date string
+    scheduledTime?: string; // HH:mm format
+    status: 'scheduled' | 'completed' | 'cancelled';
+    meal?: Meal;
+    adherent?: AssignedClient;
+}
+
+export interface CreateScheduledMealRequest {
+    mealId: number;
+    adherentId: number;
+    scheduledDate: string;
+    scheduledTime?: string;
+}
+
+export interface UpdateScheduledMealRequest {
+    scheduledDate: string;
+    scheduledTime?: string;
+    status?: 'scheduled' | 'completed' | 'cancelled';
+}
+
+// ==========================================
+// Unified Calendar Event Types
+// ==========================================
+
+export type CalendarEventType = ScheduledWorkoutSession | ScheduledMeal;
+
+// Type guards for calendar events
+export function isScheduledWorkout(event: CalendarEventType): event is ScheduledWorkoutSession {
+    return 'scheduledWorkoutSessionId' in event && 'workoutSessionId' in event;
+}
+
+export function isScheduledMeal(event: CalendarEventType): event is ScheduledMeal {
+    return 'scheduledMealId' in event && 'mealId' in event;
+}
+
+// ==========================================
+// Meal Tab Types
+// ==========================================
+
+export interface MealTab {
+    mealTabId: number;
+    name: string;
+    orderIndex: number;
+    mealCount: number;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface CreateMealTabRequest {
+    name: string;
+    orderIndex: number;
+}
+
+// ==========================================
+// Meal Types
+// ==========================================
+
+export interface MealIngredient {
+    name: string;
+    quantityGrams: number;
+    type: 'Aliment' | 'Complement';
+    orderIndex: number;
+}
+
+export interface Meal {
+    mealId: number;
+    mealTabId: number;
+    name: string;
+    description?: string;
+    imageUrl?: string;
+    orderIndex: number;
+    ingredients: MealIngredient[];
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface CreateMealRequest {
+    mealTabId: number;
+    name: string;
+    description?: string;
+    ingredients: MealIngredient[];
+    orderIndex: number;
+}
+
+export interface UpdateMealRequest {
+    name: string;
+    description?: string;
+    ingredients: MealIngredient[];
+}

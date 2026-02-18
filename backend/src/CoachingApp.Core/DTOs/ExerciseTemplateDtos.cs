@@ -6,6 +6,7 @@ namespace CoachingApp.Core.DTOs
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
         public string Category { get; set; } = string.Empty;
+        public string? Category2 { get; set; }
         public string? Equipment { get; set; }
         public string? VideoUrl { get; set; }
         public string? ThumbnailUrl { get; set; }
@@ -19,6 +20,7 @@ namespace CoachingApp.Core.DTOs
     {
         public string Name { get; set; } = string.Empty;
         public string Category { get; set; } = string.Empty;
+        public string? Category2 { get; set; }
         public string? Description { get; set; }
         public string? Equipment { get; set; }
         public string? Instructions { get; set; }
@@ -29,6 +31,7 @@ namespace CoachingApp.Core.DTOs
     {
         public string Name { get; set; } = string.Empty;
         public string Category { get; set; } = string.Empty;
+        public string? Category2 { get; set; }
         public string? Description { get; set; }
         public string? Equipment { get; set; }
         public string? Instructions { get; set; }
