@@ -151,7 +151,6 @@ namespace CoachingApp.Infrastructure.Services
                     Ingredients: meal.Meal.Ingredients?.Select(i => new MealIngredientDto(
                         Name: i.Name,
                         QuantityGrams: i.QuantityGrams,
-                        Type: i.Type,
                         OrderIndex: i.OrderIndex
                     )).ToList() ?? new List<MealIngredientDto>(),
                     CreatedAt: meal.Meal.CreatedAt,

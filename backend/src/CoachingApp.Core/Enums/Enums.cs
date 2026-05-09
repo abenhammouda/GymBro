@@ -11,8 +11,27 @@ public enum CoachClientStatus
 {
     Active,
     Paused,
+    Inactive,
     Completed,
     Cancelled
+}
+
+public enum WorkNature
+{
+    Sedentary,          // bureau, télétravail sédentaire
+    LightActivity,      // travail léger debout
+    ModerateActivity,   // travail modéré (manutention légère)
+    ActiveWork,         // travail physique intense
+    VeryActive          // travail très physique (BTP, agriculture...)
+}
+
+public enum GoalType
+{
+    WeightLoss,
+    MuscleGain,
+    Maintenance,
+    Endurance,
+    Flexibility
 }
 
 public enum ProgramStatus
@@ -64,4 +83,12 @@ public enum FileType
     Image,
     Video,
     Document
+}
+
+public enum SupplementTiming
+{
+    PreMeal,
+    PostMeal,
+    PreWorkout,
+    PostWorkout
 }

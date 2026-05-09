@@ -70,7 +70,6 @@ public class MealService
             {
                 Name = ingredientDto.Name,
                 QuantityGrams = ingredientDto.QuantityGrams,
-                Type = ingredientDto.Type,
                 OrderIndex = ingredientDto.OrderIndex
             });
         }
@@ -126,7 +125,6 @@ public class MealService
             {
                 Name = ingredientDto.Name,
                 QuantityGrams = ingredientDto.QuantityGrams,
-                Type = ingredientDto.Type,
                 OrderIndex = ingredientDto.OrderIndex
             });
         }
@@ -169,7 +167,6 @@ public class MealService
                 .Select(i => new MealIngredientDto(
                     i.Name,
                     i.QuantityGrams,
-                    i.Type,
                     i.OrderIndex
                 ))
                 .ToList(),

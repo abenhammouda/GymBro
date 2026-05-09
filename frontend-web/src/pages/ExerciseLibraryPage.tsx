@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Pencil } from 'lucide-react';
+import { Plus, Search, Pencil, Sparkles } from 'lucide-react';
 import MainLayout from '../components/layout/MainLayout';
 import ChatPopup from '../components/ChatPopup';
 import ExerciseTemplateModal from '../components/ExerciseTemplateModal';
 import ExerciseViewerModal from '../components/ExerciseViewerModal';
+import BulkAIImportModal from '../components/BulkAIImportModal';
 import exerciseTemplateService from '../services/exerciseTemplate.service';
 import type { ExerciseTemplate, ExerciseCategory } from '../types';
 import './ExerciseLibraryPage.css';
@@ -20,6 +21,7 @@ const ExerciseLibraryPage: React.FC = () => {
     const [isViewerOpen, setIsViewerOpen] = useState(false);
     const [viewedExercise, setViewedExercise] = useState<ExerciseTemplate | null>(null);
     const [playingExerciseId, setPlayingExerciseId] = useState<number | null>(null);
+    const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
 
     useEffect(() => {
         loadExercises();
@@ -171,10 +173,17 @@ const ExerciseLibraryPage: React.FC = () => {
             <div className="exercise-library-page">
                 <div className="page-header">
                     <h1>Exercise Library</h1>
-                    <button className="btn-add-exercise" onClick={() => handleOpenModal()}>
-                        <Plus size={20} />
-                        Add Exercise
-                    </button>
+                    <div className="page-header-actions">
+                        <button className="btn-add-exercise" onClick={() => handleOpenModal()}>
+                            <Plus size={20} />
+                            Add Exercise
+                        </button>
+                        <button className="btn-bulk-import" onClick={() => setIsBulkImportOpen(true)}>
+                            <Sparkles size={18} />
+                            Bulk AI Import
+                            <span className="btn-bulk-badge">NEW</span>
+                        </button>
+                    </div>
                 </div>
 
                 {/* Search and Filters */}
@@ -345,6 +354,13 @@ const ExerciseLibraryPage: React.FC = () => {
                 isOpen={isViewerOpen}
                 onClose={handleCloseViewer}
                 exercise={viewedExercise}
+            />
+
+            {/* Bulk AI Import Modal */}
+            <BulkAIImportModal
+                isOpen={isBulkImportOpen}
+                onClose={() => setIsBulkImportOpen(false)}
+                onImportComplete={() => { setIsBulkImportOpen(false); loadExercises(); }}
             />
 
             {/* Chat Popup */}

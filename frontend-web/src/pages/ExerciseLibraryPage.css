@@ -38,6 +38,45 @@
     background: #1976d2;
 }
 
+.page-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.btn-bulk-import {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.btn-bulk-import:hover {
+    background: linear-gradient(135deg, #5a67d8 0%, #6b3f9e 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-bulk-badge {
+    background: #fbbf24;
+    color: #1a1a1a;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 0.15rem 0.45rem;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
 /* Filters Section */
 .filters-section {
     margin-bottom: 2rem;
@@ -56,7 +95,7 @@
 }
 
 .search-box:focus-within {
-    border-color: #667eea;
+    border-color: #1e88e5;
 }
 
 .search-box svg {
@@ -168,7 +207,7 @@
     position: relative;
     width: 100%;
     height: 180px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #1e88e5 0%, #1976d2 100%);
     overflow: hidden;
 }
 
@@ -188,7 +227,7 @@
     position: relative;
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #1e88e5 0%, #1976d2 100%);
     display: flex;
     align-items: center;
     justify-content: center;

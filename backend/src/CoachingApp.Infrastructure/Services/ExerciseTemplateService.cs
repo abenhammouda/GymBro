@@ -160,6 +160,26 @@ namespace CoachingApp.Infrastructure.Services
             return (videoUrl, fileName, duration, thumbnailUrl);
         }
 
+        /// <summary>
+        /// Moves a video file already on disk (temp path) to the proper uploads folder.
+        /// Returns the final (videoUrl, fileName).
+        /// </summary>
+        public (string VideoUrl, string FileName) SaveVideoFromTempPath(int coachId, string tempFilePath, string originalExtension)
+        {
+            var coachDirectory = Path.Combine(_uploadsPath, $"coach_{coachId}");
+            if (!Directory.Exists(coachDirectory))
+                Directory.CreateDirectory(coachDirectory);
+
+            var ext = originalExtension.StartsWith('.') ? originalExtension : "." + originalExtension;
+            var fileName = $"{Guid.NewGuid()}{ext}";
+            var destPath = Path.Combine(coachDirectory, fileName);
+
+            File.Move(tempFilePath, destPath, overwrite: true);
+
+            var videoUrl = $"/uploads/exercise-videos/coach_{coachId}/{fileName}";
+            return (videoUrl, fileName);
+        }
+
         private void DeleteVideoFile(string fileName)
         {
             try

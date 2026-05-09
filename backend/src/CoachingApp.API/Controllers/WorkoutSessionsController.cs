@@ -137,6 +137,52 @@ namespace CoachingApp.API.Controllers
                 await _workoutSessionService.DeleteWorkoutSessionAsync(id);
                 return NoContent();
             }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Toggles a session's status (Active / Draft). Cannot be set to non-Active
+        /// while clients are assigned.
+        /// </summary>
+        [HttpPatch("{id}/status")]
+        public async Task<ActionResult<WorkoutSessionResponse>> SetStatus(int id, [FromBody] SetStatusRequest request)
+        {
+            try
+            {
+                var session = await _workoutSessionService.SetStatusAsync(id, request.Status);
+                return Ok(session);
+            }
+            catch (KeyNotFoundException) { return NotFound(); }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Returns a draft copy of the source session. The client opens it in the create
+        /// modal and POSTs it back to /WorkoutSessions to persist.
+        /// </summary>
+        [HttpPost("{id}/duplicate-draft")]
+        public async Task<ActionResult<WorkoutSessionResponse>> GetDuplicateDraft(int id)
+        {
+            try
+            {
+                var draft = await _workoutSessionService.BuildDuplicateDraftAsync(id);
+                return Ok(draft);
+            }
+            catch (KeyNotFoundException) { return NotFound(); }
             catch (Exception ex)
             {
                 return BadRequest(new { message = ex.Message });

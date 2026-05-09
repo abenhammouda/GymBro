@@ -96,7 +96,7 @@
 }
 
 .message-list__message--own .message-list__message-bubble {
-    background: linear-gradient(135deg, var(--color-primary), #2563eb);
+    background: linear-gradient(135deg, var(--color-primary), #3A7BC8);
     color: white;
     border-bottom-right-radius: var(--radius-xs);
 }

@@ -1,47 +1,94 @@
-import { useState, useEffect } from 'react';
-import { Plus, X, UtensilsCrossed, Trash2 } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import {
+    Plus, X, UtensilsCrossed, Trash2, Search, MoreVertical,
+    Pencil, Copy, Sparkles
+} from 'lucide-react';
 import MainLayout from '../components/layout/MainLayout';
+import Pagination from '../components/common/Pagination';
 import { mealTabService } from '../services/mealTab.service';
 import { mealService } from '../services/meal.service';
 import type { MealTab, Meal, CreateMealRequest, UpdateMealRequest, MealIngredient } from '../types';
 import toast, { Toaster } from 'react-hot-toast';
 import './MealsPage.css';
 
+// ──────────────────────────────────────────────────────────
+// Visual mapping for the leading meal icon. Since we don't store
+// images yet, we render a colored placeholder that varies by tab
+// position (1st = breakfast warm, 2nd = lunch fresh, 3rd = dinner cool, etc).
+// ──────────────────────────────────────────────────────────
+const TAB_VISUALS = [
+    { bg: '#fef3c7', fg: '#d97706' }, // 1st - warm yellow
+    { bg: '#d1fae5', fg: '#059669' }, // 2nd - fresh green
+    { bg: '#dbeafe', fg: '#2563eb' }, // 3rd - cool blue
+    { bg: '#ede9fe', fg: '#7c3aed' }, // 4th - purple
+    { bg: '#fce7f3', fg: '#db2777' }, // 5th - pink
+    { bg: '#fee2e2', fg: '#dc2626' }, // 6th - red
+    { bg: '#e0e7ff', fg: '#4f46e5' }, // 7th - indigo
+    { bg: '#ccfbf1', fg: '#0d9488' }, // 8th - teal
+];
+
+const getTabVisual = (orderIndex: number) =>
+    TAB_VISUALS[orderIndex % TAB_VISUALS.length];
+
 const MealsPage = () => {
     const [tabs, setTabs] = useState<MealTab[]>([]);
-    const [activeTabId, setActiveTabId] = useState<number | null>(null);
-    const [meals, setMeals] = useState<Meal[]>([]);
+    const [activeTabId, setActiveTabId] = useState<number | 'all'>('all');
+    const [mealsByTab, setMealsByTab] = useState<Record<number, Meal[]>>({});
     const [loading, setLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [sortBy, setSortBy] = useState<'recent' | 'name' | 'ingredients'>('recent');
+
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingMeal, setEditingMeal] = useState<Meal | null>(null);
+    const [modalMode, setModalMode] = useState<'create' | 'edit' | 'duplicate'>('create');
+    const [modalTabId, setModalTabId] = useState<number | null>(null);
+    const [formData, setFormData] = useState({ name: '', description: '' });
+    const [aliments, setAliments] = useState<MealIngredient[]>([]);
+
     const [deleteConfirmTab, setDeleteConfirmTab] = useState<MealTab | null>(null);
     const [deleteConfirmMeal, setDeleteConfirmMeal] = useState<Meal | null>(null);
-    const [formData, setFormData] = useState({
-        name: '',
-        description: ''
-    });
-    const [aliments, setAliments] = useState<MealIngredient[]>([]);
-    const [complements, setComplements] = useState<MealIngredient[]>([]);
-    const [imageFile, setImageFile] = useState<File | null>(null);
+
+    const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+    const menuRef = useRef<HTMLDivElement>(null);
+
+    // Pagination
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
+
+    // ──────────────────────────────────────────────────────
+    // Effects
+    // ──────────────────────────────────────────────────────
 
     useEffect(() => {
         loadTabs();
     }, []);
 
     useEffect(() => {
-        if (activeTabId) {
-            loadMeals(activeTabId);
-        }
-    }, [activeTabId]);
+        const handler = (e: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+                setOpenMenuId(null);
+            }
+        };
+        if (openMenuId !== null) document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, [openMenuId]);
+
+    // ──────────────────────────────────────────────────────
+    // Loaders
+    // ──────────────────────────────────────────────────────
 
     const loadTabs = async () => {
         try {
             setLoading(true);
             const data = await mealTabService.getAllTabs();
             setTabs(data);
-            if (data.length > 0 && !activeTabId) {
-                setActiveTabId(data[0].mealTabId);
-            }
+            // Load meals for every tab so the "All" view aggregates them
+            const all: Record<number, Meal[]> = {};
+            await Promise.all(data.map(async (t) => {
+                try { all[t.mealTabId] = await mealService.getMealsByTab(t.mealTabId); }
+                catch { all[t.mealTabId] = []; }
+            }));
+            setMealsByTab(all);
         } catch (error) {
             console.error('Error loading tabs:', error);
             toast.error('Erreur lors du chargement des tabs');
@@ -50,27 +97,31 @@ const MealsPage = () => {
         }
     };
 
-    const loadMeals = async (tabId: number) => {
+    const reloadTabMeals = async (tabId: number) => {
         try {
-            const data = await mealService.getMealsByTab(tabId);
-            setMeals(data);
-        } catch (error) {
-            console.error('Error loading meals:', error);
-            toast.error('Erreur lors du chargement des repas');
+            const meals = await mealService.getMealsByTab(tabId);
+            setMealsByTab(prev => ({ ...prev, [tabId]: meals }));
+        } catch (e) {
+            console.error('Error reloading meals:', e);
         }
     };
+
+    // ──────────────────────────────────────────────────────
+    // Tab actions
+    // ──────────────────────────────────────────────────────
 
     const handleAddTab = async () => {
         try {
             const newOrderIndex = tabs.length;
-            const tabNames = ['1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th', '9th', '10th'];
+            const tabNames = ['1st Meal', '2nd Meal', '3rd Meal', '4th Meal', '5th Meal', '6th Meal', '7th Meal', '8th Meal'];
             const newTab = await mealTabService.createTab({
-                name: tabNames[newOrderIndex] || `${newOrderIndex + 1}th`,
+                name: tabNames[newOrderIndex] || `${newOrderIndex + 1}th Meal`,
                 orderIndex: newOrderIndex
             });
             setTabs([...tabs, newTab]);
+            setMealsByTab(prev => ({ ...prev, [newTab.mealTabId]: [] }));
             setActiveTabId(newTab.mealTabId);
-            toast.success('Tab créé avec succès');
+            toast.success('Tab créé');
         } catch (error) {
             console.error('Error creating tab:', error);
             toast.error('Erreur lors de la création du tab');
@@ -79,90 +130,71 @@ const MealsPage = () => {
 
     const handleDeleteTab = async () => {
         if (!deleteConfirmTab) return;
-
-        // Vérifier si le tab contient des repas
         if (deleteConfirmTab.mealCount > 0) {
-            toast.error(`Impossible de supprimer ce tab : il contient ${deleteConfirmTab.mealCount} repas. Veuillez d'abord supprimer tous les repas.`);
+            toast.error(`Le tab contient ${deleteConfirmTab.mealCount} repas — supprimez-les d'abord.`);
             setDeleteConfirmTab(null);
             return;
         }
-
         try {
             await mealTabService.deleteTab(deleteConfirmTab.mealTabId);
-            const newTabs = tabs.filter(t => t.mealTabId !== deleteConfirmTab.mealTabId);
-            setTabs(newTabs);
-            if (activeTabId === deleteConfirmTab.mealTabId && newTabs.length > 0) {
-                setActiveTabId(newTabs[0].mealTabId);
-            }
-            toast.success('Tab supprimé avec succès');
-            setDeleteConfirmTab(null);
+            setTabs(tabs.filter(t => t.mealTabId !== deleteConfirmTab.mealTabId));
+            setMealsByTab(prev => {
+                const next = { ...prev };
+                delete next[deleteConfirmTab.mealTabId];
+                return next;
+            });
+            if (activeTabId === deleteConfirmTab.mealTabId) setActiveTabId('all');
+            toast.success('Tab supprimé');
         } catch (error) {
             console.error('Error deleting tab:', error);
             toast.error('Erreur lors de la suppression du tab');
+        } finally {
             setDeleteConfirmTab(null);
         }
     };
 
-    const handleOpenModal = (meal?: Meal) => {
-        if (meal) {
-            setEditingMeal(meal);
-            setFormData({
-                name: meal.name,
-                description: meal.description || ''
-            });
-            setAliments(meal.ingredients.filter(i => i.type === 'Aliment'));
-            setComplements(meal.ingredients.filter(i => i.type === 'Complement'));
-        } else {
-            setEditingMeal(null);
-            setFormData({
-                name: '',
-                description: ''
-            });
-            setAliments([]);
-            setComplements([]);
-        }
-        setImageFile(null);
+    // ──────────────────────────────────────────────────────
+    // Meal modal
+    // ──────────────────────────────────────────────────────
+
+    const openCreateMeal = () => {
+        setEditingMeal(null);
+        setModalMode('create');
+        setModalTabId(typeof activeTabId === 'number' ? activeTabId : (tabs[0]?.mealTabId ?? null));
+        setFormData({ name: '', description: '' });
+        setAliments([]);
+        setIsModalOpen(true);
+    };
+
+    const openEditMeal = (meal: Meal) => {
+        setEditingMeal(meal);
+        setModalMode('edit');
+        setModalTabId(meal.mealTabId);
+        setFormData({ name: meal.name, description: meal.description || '' });
+        setAliments(meal.ingredients.map((i, idx) => ({ ...i, orderIndex: idx })));
+        setIsModalOpen(true);
+    };
+
+    const openDuplicateMeal = (meal: Meal) => {
+        setOpenMenuId(null);
+        setEditingMeal(null);
+        setModalMode('duplicate');
+        setModalTabId(meal.mealTabId);
+        setFormData({
+            name: `${meal.name} (Copie)`,
+            description: meal.description || ''
+        });
+        setAliments(meal.ingredients.map((a, i) => ({ ...a, orderIndex: i })));
         setIsModalOpen(true);
     };
 
     const handleCloseModal = () => {
         setIsModalOpen(false);
         setEditingMeal(null);
-        setFormData({
-            name: '',
-            description: ''
-        });
+        setModalMode('create');
+        setModalTabId(null);
+        setFormData({ name: '', description: '' });
         setAliments([]);
-        setComplements([]);
-        setImageFile(null);
-    };
-
-    const handleAddAliment = () => {
-        setAliments([...aliments, { name: '', quantityGrams: 0, type: 'Aliment', orderIndex: aliments.length }]);
-    };
-
-    const handleRemoveAliment = (index: number) => {
-        setAliments(aliments.filter((_, i) => i !== index));
-    };
-
-    const handleUpdateAliment = (index: number, field: 'name' | 'quantityGrams', value: string | number) => {
-        const updated = [...aliments];
-        updated[index] = { ...updated[index], [field]: value };
-        setAliments(updated);
-    };
-
-    const handleAddComplement = () => {
-        setComplements([...complements, { name: '', quantityGrams: 0, type: 'Complement', orderIndex: complements.length }]);
-    };
-
-    const handleRemoveComplement = (index: number) => {
-        setComplements(complements.filter((_, i) => i !== index));
-    };
-
-    const handleUpdateComplement = (index: number, field: 'name' | 'quantityGrams', value: string | number) => {
-        const updated = [...complements];
-        updated[index] = { ...updated[index], [field]: value };
-        setComplements(updated);
     };
 
     const handleSaveMeal = async () => {
@@ -170,40 +202,41 @@ const MealsPage = () => {
             toast.error('Le nom du repas est requis');
             return;
         }
-
-        if (!activeTabId) {
-            toast.error('Aucun tab sélectionné');
+        if (!modalTabId) {
+            toast.error('Aucune catégorie sélectionnée');
             return;
         }
 
-        // Combine aliments and complements with proper order indices
-        const allIngredients: MealIngredient[] = [
-            ...aliments.map((a, i) => ({ ...a, orderIndex: i })),
-            ...complements.map((c, i) => ({ ...c, orderIndex: i }))
-        ];
+        const allIngredients: MealIngredient[] = aliments.map((a, i) => ({
+            ...a,
+            orderIndex: i
+        }));
 
         try {
-            if (editingMeal) {
+            if (modalMode === 'edit' && editingMeal) {
                 const updateData: UpdateMealRequest = {
                     name: formData.name,
                     description: formData.description || undefined,
                     ingredients: allIngredients
                 };
-                await mealService.updateMeal(editingMeal.mealId, updateData, imageFile || undefined);
-                toast.success('Repas modifié avec succès');
+                await mealService.updateMeal(editingMeal.mealId, updateData);
+                toast.success('Repas modifié');
             } else {
+                const targetTab = tabs.find(t => t.mealTabId === modalTabId);
                 const createData: CreateMealRequest = {
-                    mealTabId: activeTabId,
+                    mealTabId: modalTabId,
                     name: formData.name,
                     description: formData.description || undefined,
                     ingredients: allIngredients,
-                    orderIndex: meals.length
+                    orderIndex: (mealsByTab[modalTabId]?.length ?? 0)
                 };
-                await mealService.createMeal(createData, imageFile || undefined);
-                toast.success('Repas créé avec succès');
+                await mealService.createMeal(createData);
+                toast.success(modalMode === 'duplicate'
+                    ? `Repas dupliqué dans ${targetTab?.name ?? 'la catégorie'}`
+                    : 'Repas créé');
             }
-            loadMeals(activeTabId);
-            loadTabs(); // Reload tabs to update mealCount
+            await reloadTabMeals(modalTabId);
+            await loadTabs(); // refresh mealCount on tabs
             handleCloseModal();
         } catch (error) {
             console.error('Error saving meal:', error);
@@ -213,157 +246,345 @@ const MealsPage = () => {
 
     const handleDeleteMeal = async () => {
         if (!deleteConfirmMeal) return;
-
         try {
             await mealService.deleteMeal(deleteConfirmMeal.mealId);
-            if (activeTabId) {
-                loadMeals(activeTabId);
-                loadTabs(); // Reload tabs to update mealCount
-            }
-            toast.success('Repas supprimé avec succès');
-            setDeleteConfirmMeal(null);
+            await reloadTabMeals(deleteConfirmMeal.mealTabId);
+            await loadTabs();
+            toast.success('Repas supprimé');
         } catch (error) {
             console.error('Error deleting meal:', error);
             toast.error('Erreur lors de la suppression du repas');
+        } finally {
             setDeleteConfirmMeal(null);
         }
     };
 
+    // ──────────────────────────────────────────────────────
+    // Ingredient editing helpers
+    // ──────────────────────────────────────────────────────
+
+    const updateIngredient = (
+        list: MealIngredient[],
+        setter: (next: MealIngredient[]) => void,
+        index: number,
+        field: 'name' | 'quantityGrams',
+        value: string | number
+    ) => {
+        const next = [...list];
+        next[index] = { ...next[index], [field]: value };
+        setter(next);
+    };
+
+    // ──────────────────────────────────────────────────────
+    // Derived data
+    // ──────────────────────────────────────────────────────
+
+    const allMeals: (Meal & { tab?: MealTab })[] = (() => {
+        const entries: (Meal & { tab?: MealTab })[] = [];
+        const tabsById = new Map(tabs.map(t => [t.mealTabId, t]));
+        const targetTabIds = activeTabId === 'all'
+            ? tabs.map(t => t.mealTabId)
+            : [activeTabId];
+        for (const tabId of targetTabIds) {
+            const meals = mealsByTab[tabId] || [];
+            for (const m of meals) entries.push({ ...m, tab: tabsById.get(tabId) });
+        }
+        return entries;
+    })();
+
+    const filteredMeals = allMeals
+        .filter(m => {
+            if (!searchQuery.trim()) return true;
+            const q = searchQuery.toLowerCase();
+            return (
+                m.name.toLowerCase().includes(q) ||
+                (m.description || '').toLowerCase().includes(q) ||
+                m.ingredients.some(i => i.name.toLowerCase().includes(q))
+            );
+        })
+        .sort((a, b) => {
+            switch (sortBy) {
+                case 'name':
+                    return a.name.localeCompare(b.name);
+                case 'ingredients':
+                    return b.ingredients.length - a.ingredients.length;
+                case 'recent':
+                default:
+                    return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+            }
+        });
+
+    // Pagination derived data
+    const totalPages = Math.max(1, Math.ceil(filteredMeals.length / pageSize));
+    const safePage = Math.min(currentPage, totalPages);
+    const pageStart = (safePage - 1) * pageSize;
+    const paginatedMeals = filteredMeals.slice(pageStart, pageStart + pageSize);
+
+    // Reset to page 1 when filters/tab/search/pageSize change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [activeTabId, searchQuery, sortBy, pageSize]);
+
+    const totalMealsCount = Object.values(mealsByTab).reduce((acc, arr) => acc + arr.length, 0);
+
+    const formatDate = (iso?: string) => {
+        if (!iso) return '—';
+        return new Date(iso).toLocaleDateString('fr-FR', {
+            year: 'numeric', month: 'short', day: 'numeric'
+        });
+    };
+
+    const getIngredientPreview = (meal: Meal): string => {
+        if (meal.description) return meal.description;
+        if (meal.ingredients.length === 0) return 'Aucun ingrédient';
+        return meal.ingredients.slice(0, 4).map(i => i.name).join(', ')
+            + (meal.ingredients.length > 4 ? '…' : '');
+    };
+
+    // ──────────────────────────────────────────────────────
+    // Render
+    // ──────────────────────────────────────────────────────
+
     return (
         <MainLayout>
-            <div className="meals-page">
-                <div className="page-header">
-                    <div className="header-content">
+            <div className="ml-page">
+                {/* Header */}
+                <div className="ml-header">
+                    <div>
                         <h1>Meals</h1>
-                        <p>Gérez vos repas par catégories</p>
+                        <p>Organisez et gérez vos repas par catégories</p>
                     </div>
-                    <button className="btn-primary" onClick={() => handleOpenModal()}>
-                        <Plus size={20} />
+                    <button className="ml-btn-primary" onClick={openCreateMeal}>
+                        <Plus size={18} />
                         Nouveau Repas
                     </button>
                 </div>
 
-                <div className="tabs-section">
-                    <div className="tabs-container">
-                        {tabs.map(tab => (
-                            <div
-                                key={tab.mealTabId}
-                                className={`tab ${activeTabId === tab.mealTabId ? 'active' : ''}`}
-                                onClick={() => setActiveTabId(tab.mealTabId)}
-                            >
-                                <span>{tab.name}</span>
-                                <span className="meal-count">{tab.mealCount}</span>
-                                {tab.orderIndex >= 3 && (
-                                    <button
-                                        className="delete-tab-btn"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setDeleteConfirmTab(tab);
-                                        }}
-                                    >
-                                        <X size={16} />
-                                    </button>
-                                )}
-                            </div>
-                        ))}
-                        <button className="add-tab-btn" onClick={handleAddTab}>
-                            <Plus size={20} />
+                {/* Tabs row */}
+                <div className="ml-tabs">
+                    <button
+                        className={`ml-tab ${activeTabId === 'all' ? 'active' : ''}`}
+                        onClick={() => setActiveTabId('all')}
+                    >
+                        <span>Tous</span>
+                        <span className="ml-tab-count">{totalMealsCount}</span>
+                    </button>
+                    {tabs.map(tab => (
+                        <button
+                            key={tab.mealTabId}
+                            className={`ml-tab ${activeTabId === tab.mealTabId ? 'active' : ''}`}
+                            onClick={() => setActiveTabId(tab.mealTabId)}
+                        >
+                            <span>{tab.name}</span>
+                            <span className="ml-tab-count">{tab.mealCount}</span>
+                            {tab.orderIndex >= 3 && (
+                                <span
+                                    className="ml-tab-close"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setDeleteConfirmTab(tab);
+                                    }}
+                                    role="button"
+                                    aria-label="Supprimer le tab"
+                                >
+                                    <X size={13} />
+                                </span>
+                            )}
                         </button>
-                    </div>
+                    ))}
+                    <button className="ml-tab-add" onClick={handleAddTab} aria-label="Ajouter une catégorie">
+                        <Plus size={16} />
+                    </button>
                 </div>
 
-                {loading ? (
-                    <div className="loading-state">
-                        <div className="spinner"></div>
-                        <p>Chargement des repas...</p>
+                {/* Toolbar */}
+                <div className="ml-toolbar">
+                    <div className="ml-search">
+                        <Search size={18} />
+                        <input
+                            type="text"
+                            placeholder="Rechercher un repas, un ingrédient..."
+                            value={searchQuery}
+                            onChange={e => setSearchQuery(e.target.value)}
+                        />
                     </div>
-                ) : meals.length === 0 ? (
-                    <div className="empty-state">
-                        <UtensilsCrossed size={64} />
+                    <select
+                        className="ml-filter-select"
+                        value={sortBy}
+                        onChange={e => setSortBy(e.target.value as any)}
+                    >
+                        <option value="recent">Tri: Plus récents</option>
+                        <option value="name">Tri: Nom A→Z</option>
+                        <option value="ingredients">Tri: Plus d'ingrédients</option>
+                    </select>
+                </div>
+
+                {/* Body */}
+                {loading ? (
+                    <div className="ml-loading">
+                        <div className="ml-spinner" />
+                        <p>Chargement…</p>
+                    </div>
+                ) : filteredMeals.length === 0 ? (
+                    <div className="ml-empty">
+                        <UtensilsCrossed size={56} />
                         <h3>Aucun repas trouvé</h3>
                         <p>Créez votre premier repas pour commencer</p>
-                        <button className="btn-primary" onClick={() => handleOpenModal()}>
-                            <Plus size={20} />
+                        <button className="ml-btn-primary" onClick={openCreateMeal}>
+                            <Plus size={18} />
                             Créer un Repas
                         </button>
                     </div>
                 ) : (
-                    <div className="meals-grid">
-                        {meals.map(meal => (
-                            <div key={meal.mealId} className="meal-card">
-                                <div
-                                    className="meal-image"
-                                    style={{
-                                        backgroundImage: meal.imageUrl
-                                            ? `url(${meal.imageUrl.startsWith('http') ? meal.imageUrl : `${import.meta.env.VITE_API_URL}${meal.imageUrl}`})`
-                                            : undefined
-                                    }}
-                                >
-                                    {!meal.imageUrl && <div className="default-meal-icon"><UtensilsCrossed size={48} /></div>}
-                                    <button
-                                        className="delete-meal-btn"
-                                        onClick={() => setDeleteConfirmMeal(meal)}
-                                    >
-                                        <Trash2 size={16} />
-                                    </button>
-                                </div>
-                                <div className="meal-content">
-                                    <h3>{meal.name}</h3>
-                                    {meal.description && <p className="meal-description">{meal.description}</p>}
+                    <div className="ml-table-wrap">
+                        <table className="ml-table">
+                            <thead>
+                                <tr>
+                                    <th>Repas</th>
+                                    <th>Catégorie</th>
+                                    <th className="ml-col-num">Ingrédients</th>
+                                    <th>Macros &amp; Calories</th>
+                                    <th>Mise à jour</th>
+                                    <th className="ml-col-actions" />
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {paginatedMeals.map((meal, rowIndex) => {
+                                    const visual = getTabVisual(meal.tab?.orderIndex ?? 0);
+                                    const isMenuOpen = openMenuId === meal.mealId;
+                                    // Flip menu upward for the last 2 rows or when fewer than 3 rows remain below
+                                    const flipMenu = paginatedMeals.length > 2
+                                        && rowIndex >= paginatedMeals.length - 2;
 
-                                    {meal.ingredients.length > 0 && (
-                                        <div className="meal-ingredients">
-                                            {meal.ingredients.filter(i => i.type === 'Aliment').length > 0 && (
-                                                <div className="ingredient-section">
-                                                    <h4>Aliments</h4>
-                                                    {meal.ingredients
-                                                        .filter(i => i.type === 'Aliment')
-                                                        .map((ing, idx) => (
-                                                            <div key={idx} className="ingredient-item">
-                                                                <span>{ing.name}</span>
-                                                                <span>{ing.quantityGrams}g</span>
-                                                            </div>
-                                                        ))}
+                                    return (
+                                        <tr key={meal.mealId} onClick={() => openEditMeal(meal)}>
+                                            <td>
+                                                <div className="ml-meal-cell">
+                                                    <div
+                                                        className="ml-meal-icon"
+                                                        style={{ background: visual.bg, color: visual.fg }}
+                                                    >
+                                                        <UtensilsCrossed size={20} />
+                                                    </div>
+                                                    <div className="ml-meal-text">
+                                                        <span className="ml-meal-name">{meal.name}</span>
+                                                        <span className="ml-meal-sub">{getIngredientPreview(meal)}</span>
+                                                    </div>
                                                 </div>
-                                            )}
-                                            {meal.ingredients.filter(i => i.type === 'Complement').length > 0 && (
-                                                <div className="ingredient-section">
-                                                    <h4>Compléments</h4>
-                                                    {meal.ingredients
-                                                        .filter(i => i.type === 'Complement')
-                                                        .map((ing, idx) => (
-                                                            <div key={idx} className="ingredient-item">
-                                                                <span>{ing.name}</span>
-                                                                <span>{ing.quantityGrams}g</span>
-                                                            </div>
-                                                        ))}
+                                            </td>
+                                            <td>
+                                                <span
+                                                    className="ml-cat-chip"
+                                                    style={{ background: visual.bg, color: visual.fg }}
+                                                >
+                                                    {meal.tab?.name ?? '—'}
+                                                </span>
+                                            </td>
+                                            <td className="ml-col-num">
+                                                <div className="ml-ing-cell">
+                                                    <span className="ml-ing-total">{meal.ingredients.length}</span>
                                                 </div>
-                                            )}
-                                        </div>
-                                    )}
-
-                                    <button
-                                        className="btn-secondary"
-                                        onClick={() => handleOpenModal(meal)}
-                                    >
-                                        Modifier
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
+                                            </td>
+                                            <td>
+                                                <span className="ml-ai-pending">
+                                                    <Sparkles size={13} />
+                                                    Calcul IA bientôt
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span className="ml-muted">{formatDate(meal.updatedAt)}</span>
+                                            </td>
+                                            <td
+                                                className="ml-col-actions"
+                                                onClick={(e) => e.stopPropagation()}
+                                            >
+                                                <div className="ml-action-wrap" ref={isMenuOpen ? menuRef : null}>
+                                                    <button
+                                                        className="ml-kebab-btn"
+                                                        onClick={() =>
+                                                            setOpenMenuId(isMenuOpen ? null : meal.mealId)
+                                                        }
+                                                        aria-label="Actions"
+                                                    >
+                                                        <MoreVertical size={18} />
+                                                    </button>
+                                                    {isMenuOpen && (
+                                                        <div className={`ml-action-menu ${flipMenu ? 'flip-up' : ''}`}>
+                                                            <button
+                                                                className="ml-menu-item"
+                                                                onClick={() => {
+                                                                    setOpenMenuId(null);
+                                                                    openEditMeal(meal);
+                                                                }}
+                                                            >
+                                                                <Pencil size={15} />
+                                                                Modifier
+                                                            </button>
+                                                            <button
+                                                                className="ml-menu-item"
+                                                                onClick={() => openDuplicateMeal(meal)}
+                                                            >
+                                                                <Copy size={15} />
+                                                                Dupliquer
+                                                            </button>
+                                                            <div className="ml-menu-sep" />
+                                                            <button
+                                                                className="ml-menu-item ml-menu-item-danger"
+                                                                onClick={() => {
+                                                                    setOpenMenuId(null);
+                                                                    setDeleteConfirmMeal(meal);
+                                                                }}
+                                                            >
+                                                                <Trash2 size={15} />
+                                                                Supprimer
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                        <Pagination
+                            page={safePage}
+                            pageCount={totalPages}
+                            pageSize={pageSize}
+                            totalItems={filteredMeals.length}
+                            onPageChange={setCurrentPage}
+                            onPageSizeChange={setPageSize}
+                        />
                     </div>
                 )}
 
+                {/* Create / edit / duplicate modal */}
                 {isModalOpen && (
                     <div className="modal-overlay" onClick={handleCloseModal}>
                         <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                             <div className="modal-header">
-                                <h2>{editingMeal ? 'Modifier le Repas' : 'Nouveau Repas'}</h2>
+                                <h2>
+                                    {modalMode === 'edit' ? 'Modifier le Repas'
+                                        : modalMode === 'duplicate' ? 'Dupliquer le Repas'
+                                            : 'Nouveau Repas'}
+                                </h2>
                                 <button className="close-btn" onClick={handleCloseModal}>
                                     <X size={24} />
                                 </button>
                             </div>
                             <div className="modal-body">
+                                <div className="form-group">
+                                    <label>Catégorie *</label>
+                                    <select
+                                        value={modalTabId ?? ''}
+                                        onChange={(e) => setModalTabId(Number(e.target.value))}
+                                    >
+                                        {tabs.map(t => (
+                                            <option key={t.mealTabId} value={t.mealTabId}>{t.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
                                 <div className="form-group">
                                     <label>Titre *</label>
                                     <input
@@ -373,6 +594,7 @@ const MealsPage = () => {
                                         placeholder="Ex: Poulet grillé avec légumes"
                                     />
                                 </div>
+
                                 <div className="form-group">
                                     <label>Description</label>
                                     <textarea
@@ -383,81 +605,50 @@ const MealsPage = () => {
                                     />
                                 </div>
 
-                                {/* Aliments Section */}
+                                {/* Aliments */}
                                 <div className="ingredients-section">
                                     <div className="section-header">
                                         <h3>Aliments</h3>
-                                        <button type="button" className="btn-add-ingredient" onClick={handleAddAliment}>
+                                        <button
+                                            type="button"
+                                            className="btn-add-ingredient"
+                                            onClick={() => setAliments([
+                                                ...aliments,
+                                                { name: '', quantityGrams: 0, orderIndex: aliments.length }
+                                            ])}
+                                        >
                                             <Plus size={16} />
-                                            Ajouter un aliment
+                                            Ajouter
                                         </button>
                                     </div>
-                                    {aliments.map((aliment, index) => (
-                                        <div key={index} className="ingredient-row">
+                                    {aliments.map((a, idx) => (
+                                        <div key={idx} className="ingredient-row">
                                             <input
                                                 type="text"
                                                 placeholder="Nom"
-                                                value={aliment.name}
-                                                onChange={(e) => handleUpdateAliment(index, 'name', e.target.value)}
+                                                value={a.name}
+                                                onChange={(e) =>
+                                                    updateIngredient(aliments, setAliments, idx, 'name', e.target.value)
+                                                }
                                             />
                                             <input
                                                 type="number"
                                                 placeholder="Quantité (g)"
-                                                value={aliment.quantityGrams || ''}
-                                                onChange={(e) => handleUpdateAliment(index, 'quantityGrams', parseFloat(e.target.value) || 0)}
+                                                value={a.quantityGrams || ''}
+                                                onChange={(e) =>
+                                                    updateIngredient(aliments, setAliments, idx, 'quantityGrams',
+                                                        parseFloat(e.target.value) || 0)
+                                                }
                                             />
                                             <button
                                                 type="button"
                                                 className="btn-remove-ingredient"
-                                                onClick={() => handleRemoveAliment(index)}
+                                                onClick={() => setAliments(aliments.filter((_, i) => i !== idx))}
                                             >
                                                 <X size={16} />
                                             </button>
                                         </div>
                                     ))}
-                                </div>
-
-                                {/* Compléments Section */}
-                                <div className="ingredients-section">
-                                    <div className="section-header">
-                                        <h3>Compléments</h3>
-                                        <button type="button" className="btn-add-ingredient" onClick={handleAddComplement}>
-                                            <Plus size={16} />
-                                            Ajouter un complément
-                                        </button>
-                                    </div>
-                                    {complements.map((complement, index) => (
-                                        <div key={index} className="ingredient-row">
-                                            <input
-                                                type="text"
-                                                placeholder="Nom"
-                                                value={complement.name}
-                                                onChange={(e) => handleUpdateComplement(index, 'name', e.target.value)}
-                                            />
-                                            <input
-                                                type="number"
-                                                placeholder="Quantité (g)"
-                                                value={complement.quantityGrams || ''}
-                                                onChange={(e) => handleUpdateComplement(index, 'quantityGrams', parseFloat(e.target.value) || 0)}
-                                            />
-                                            <button
-                                                type="button"
-                                                className="btn-remove-ingredient"
-                                                onClick={() => handleRemoveComplement(index)}
-                                            >
-                                                <X size={16} />
-                                            </button>
-                                        </div>
-                                    ))}
-                                </div>
-
-                                <div className="form-group">
-                                    <label>Image du repas</label>
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={(e) => setImageFile(e.target.files?.[0] || null)}
-                                    />
                                 </div>
                             </div>
                             <div className="modal-footer">
@@ -465,13 +656,16 @@ const MealsPage = () => {
                                     Annuler
                                 </button>
                                 <button className="btn-primary" onClick={handleSaveMeal}>
-                                    {editingMeal ? 'Modifier' : 'Créer'}
+                                    {modalMode === 'edit' ? 'Enregistrer'
+                                        : modalMode === 'duplicate' ? 'Créer la copie'
+                                            : 'Créer'}
                                 </button>
                             </div>
                         </div>
                     </div>
                 )}
 
+                {/* Tab delete confirm */}
                 {deleteConfirmTab && (
                     <div className="modal-overlay" onClick={() => setDeleteConfirmTab(null)}>
                         <div className="delete-confirm-modal" onClick={(e) => e.stopPropagation()}>
@@ -481,16 +675,10 @@ const MealsPage = () => {
                             <h3>Supprimer le tab "{deleteConfirmTab.name}" ?</h3>
                             <p>Cette action supprimera définitivement ce tab et tous les {deleteConfirmTab.mealCount} repas qu'il contient.</p>
                             <div className="delete-confirm-actions">
-                                <button
-                                    className="btn-cancel"
-                                    onClick={() => setDeleteConfirmTab(null)}
-                                >
+                                <button className="btn-cancel" onClick={() => setDeleteConfirmTab(null)}>
                                     Annuler
                                 </button>
-                                <button
-                                    className="btn-delete"
-                                    onClick={handleDeleteTab}
-                                >
+                                <button className="btn-delete" onClick={handleDeleteTab}>
                                     <Trash2 size={18} />
                                     Supprimer
                                 </button>
@@ -499,6 +687,7 @@ const MealsPage = () => {
                     </div>
                 )}
 
+                {/* Meal delete confirm */}
                 {deleteConfirmMeal && (
                     <div className="modal-overlay" onClick={() => setDeleteConfirmMeal(null)}>
                         <div className="delete-confirm-modal" onClick={(e) => e.stopPropagation()}>
@@ -506,18 +695,12 @@ const MealsPage = () => {
                                 <Trash2 size={48} />
                             </div>
                             <h3>Supprimer "{deleteConfirmMeal.name}" ?</h3>
-                            <p>Cette action supprimera définitivement ce repas. Cette action est irréversible.</p>
+                            <p>Cette action est irréversible.</p>
                             <div className="delete-confirm-actions">
-                                <button
-                                    className="btn-cancel"
-                                    onClick={() => setDeleteConfirmMeal(null)}
-                                >
+                                <button className="btn-cancel" onClick={() => setDeleteConfirmMeal(null)}>
                                     Annuler
                                 </button>
-                                <button
-                                    className="btn-delete"
-                                    onClick={handleDeleteMeal}
-                                >
+                                <button className="btn-delete" onClick={handleDeleteMeal}>
                                     <Trash2 size={18} />
                                     Supprimer
                                 </button>

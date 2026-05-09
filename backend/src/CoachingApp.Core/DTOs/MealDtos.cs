@@ -3,7 +3,6 @@ namespace CoachingApp.Core.DTOs;
 public record MealIngredientDto(
     string Name,
     decimal QuantityGrams,
-    string Type,
     int OrderIndex
 );
 

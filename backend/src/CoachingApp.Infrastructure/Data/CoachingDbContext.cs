@@ -66,6 +66,16 @@ public class CoachingDbContext : DbContext
     // Muscle Group Images
     public DbSet<MuscleGroupImage> MuscleGroupImages { get; set; }
 
+    // Intake Photos (photos souscription)
+    public DbSet<IntakePhoto> IntakePhotos { get; set; }
+
+    // Macro Plans (macros nutritionnelles par programme)
+    public DbSet<MacroPlan> MacroPlans { get; set; }
+
+    // Supplement Sets (compléments organisés par timing)
+    public DbSet<SupplementSet> SupplementSets { get; set; }
+    public DbSet<SupplementSetItem> SupplementSetItems { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -149,6 +159,45 @@ public class CoachingDbContext : DbContext
         modelBuilder.Entity<WorkoutSessionExercise>().HasKey(wse => wse.WorkoutSessionExerciseId);
         modelBuilder.Entity<WorkoutSessionClient>().HasKey(wsc => wsc.WorkoutSessionClientId);
         modelBuilder.Entity<MuscleGroupImage>().HasKey(mgi => mgi.MuscleGroupImageId);
+        modelBuilder.Entity<IntakePhoto>().HasKey(ip => ip.IntakePhotoId);
+        modelBuilder.Entity<MacroPlan>().HasKey(mp => mp.MacroPlanId);
+
+        // Configure IntakePhoto relationships
+        modelBuilder.Entity<IntakePhoto>()
+            .HasOne(ip => ip.Adherent)
+            .WithMany(a => a.IntakePhotos)
+            .HasForeignKey(ip => ip.AdherentId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Configure MacroPlan relationships
+        modelBuilder.Entity<MacroPlan>()
+            .HasOne(mp => mp.CoachClient)
+            .WithMany(cc => cc.MacroPlans)
+            .HasForeignKey(mp => mp.CoachClientId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Configure MacroPlan decimal precision
+        modelBuilder.Entity<MacroPlan>()
+            .Property(mp => mp.ProteinGrams).HasPrecision(6, 2);
+        modelBuilder.Entity<MacroPlan>()
+            .Property(mp => mp.CarbsGrams).HasPrecision(6, 2);
+        modelBuilder.Entity<MacroPlan>()
+            .Property(mp => mp.FatGrams).HasPrecision(6, 2);
+
+        // Configure ProgressReport -> CoachClient relationship
+        modelBuilder.Entity<ProgressReport>()
+            .HasOne(pr => pr.CoachClient)
+            .WithMany()
+            .HasForeignKey(pr => pr.CoachClientId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Index on ProgressReport.CoachClientId for fast weekly progress queries
+        modelBuilder.Entity<ProgressReport>()
+            .HasIndex(pr => pr.CoachClientId);
+
+        // Configure Adherent new decimal fields
+        modelBuilder.Entity<Adherent>()
+            .Property(a => a.InitialWeight).HasPrecision(5, 2);
 
         // Configure WorkoutSessionClient relationships
         modelBuilder.Entity<WorkoutSessionClient>()
@@ -229,6 +278,42 @@ public class CoachingDbContext : DbContext
         modelBuilder.Entity<MealIngredient>()
             .Property(mi => mi.QuantityGrams)
             .HasPrecision(8, 2);
+
+        // Configure SupplementSet primary key & relationships
+        modelBuilder.Entity<SupplementSet>().HasKey(ss => ss.SupplementSetId);
+
+        modelBuilder.Entity<SupplementSet>()
+            .HasOne(ss => ss.Coach)
+            .WithMany()
+            .HasForeignKey(ss => ss.CoachId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<SupplementSet>()
+            .HasIndex(ss => new { ss.CoachId, ss.Timing, ss.Index })
+            .IsUnique();
+
+        // Configure SupplementSetItem primary key & relationships
+        modelBuilder.Entity<SupplementSetItem>().HasKey(ssi => ssi.SupplementSetItemId);
+
+        modelBuilder.Entity<SupplementSetItem>()
+            .HasOne(ssi => ssi.Set)
+            .WithMany(ss => ss.Items)
+            .HasForeignKey(ssi => ssi.SupplementSetId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<SupplementSetItem>()
+            .Property(ssi => ssi.Name)
+            .IsRequired()
+            .HasMaxLength(120);
+
+        modelBuilder.Entity<SupplementSetItem>()
+            .Property(ssi => ssi.Unit)
+            .IsRequired()
+            .HasMaxLength(16);
+
+        modelBuilder.Entity<SupplementSetItem>()
+            .Property(ssi => ssi.Quantity)
+            .HasPrecision(10, 3);
 
         // Seed initial data
         modelBuilder.Entity<SubscriptionTier>().HasData(

@@ -3,12 +3,12 @@
     gap: 1.5rem;
     height: calc(100vh - 60px);
     padding: 1rem;
-    background: #f8f9fa;
+    background: var(--color-bg-secondary);
 }
 
 .calendar-container {
     flex: 1;
-    background: white;
+    background: var(--color-bg-primary);
     border-radius: 16px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
     display: flex;
@@ -22,7 +22,7 @@
     align-items: center;
     padding: 1.5rem 2rem;
     border-bottom: 2px solid #e5e7eb;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #4A90E2 0%, #3A7BC8 100%);
     color: white;
 }
 
@@ -91,7 +91,7 @@
 
 .view-button.active {
     background: white;
-    color: #667eea;
+    color: #4A90E2;
 }
 
 .view-button:hover:not(.active) {
@@ -106,8 +106,8 @@
 
 .calendar-header {
     display: grid;
-    background: #f9fafb;
-    border-bottom: 2px solid #e5e7eb;
+    background: var(--color-bg-secondary);
+    border-bottom: 2px solid var(--color-border-light);
     position: sticky;
     top: 0;
     z-index: 10;
@@ -181,7 +181,7 @@
 }
 
 .time-cell:hover {
-    background: #f9fafb;
+    background: var(--color-bg-secondary);
 }
 
 .time-cell:last-child {
@@ -217,7 +217,7 @@
 }
 
 .day-cell:hover {
-    background: #f9fafb;
+    background: var(--color-bg-secondary);
 }
 
 .day-cell:last-child {
@@ -225,7 +225,7 @@
 }
 
 .day-cell.other-month {
-    background: #f9fafb;
+    background: var(--color-bg-secondary);
     opacity: 0.5;
 }
 
@@ -246,7 +246,7 @@
 /* Clients Sidebar */
 .clients-sidebar {
     width: 280px;
-    background: white;
+    background: var(--color-bg-primary);
     border-radius: 16px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
     display: flex;
@@ -271,16 +271,16 @@
     align-items: center;
     gap: 0.75rem;
     padding: 0.75rem 1rem;
-    background: #f9fafb;
+    background: var(--color-bg-secondary);
     border: 1px solid #e5e7eb;
     border-radius: 10px;
     transition: all 0.2s;
 }
 
 .search-box:focus-within {
-    border-color: #667eea;
-    background: white;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    border-color: #4A90E2;
+    background: var(--color-bg-primary);
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
 }
 
 .search-box svg {
@@ -304,6 +304,7 @@
     flex: 1;
     overflow-y: auto;
     padding: 0.5rem;
+    background: var(--color-bg-primary);
 }
 
 .client-item {
@@ -318,11 +319,11 @@
 }
 
 .client-item:hover {
-    background: #f9fafb;
+    background: var(--color-bg-secondary);
 }
 
 .client-item.selected {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #4A90E2 0%, #3A7BC8 100%);
     color: white;
 }
 
@@ -342,7 +343,7 @@
 }
 
 .client-avatar-placeholder {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #4A90E2 0%, #3A7BC8 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -350,8 +351,8 @@
 }
 
 .client-item.selected .client-avatar-placeholder {
-    background: white;
-    color: #667eea;
+    background: var(--color-bg-primary);
+    color: #4A90E2;
 }
 
 .client-name {
@@ -416,7 +417,7 @@
 
 /* Drag and Drop */
 .dragging-session {
-    background: #667eea;
+    background: #4A90E2;
     color: white;
     padding: 0.75rem 1rem;
     border-radius: 8px;
@@ -433,7 +434,7 @@
 
 .calendar-grid::-webkit-scrollbar-track,
 .clients-list::-webkit-scrollbar-track {
-    background: #f3f4f6;
+    background: var(--color-bg-tertiary);
     border-radius: 4px;
 }
 
@@ -451,7 +452,7 @@
 /* Session Card (Week View) */
 .calendar-session-card {
     position: absolute;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #4A90E2 0%, #3A7BC8 100%);
     color: white;
     border-radius: 8px;
     padding: 0.5rem;
@@ -539,7 +540,7 @@
     white-space: nowrap;
     overflow: hidden;
     cursor: pointer;
-    border-left: 3px solid #667eea;
+    border-left: 3px solid #4A90E2;
 }
 
 .session-item-month:hover {
@@ -548,7 +549,7 @@
 
 .session-time {
     font-weight: 600;
-    color: #667eea;
+    color: #4A90E2;
 }
 
 .session-title {
@@ -562,10 +563,250 @@
     flex: 1;
     border-right: 1px solid #e5e7eb;
     min-height: 400px;
-    background: white;
+    background: var(--color-bg-primary);
     transition: background-color 0.2s;
 }
 
 .day-column:last-child {
     border-right: none;
+}
+
+/* Past days - grayed out */
+.day-past {
+    background-color: #f3f4f6 !important;
+    opacity: 0.6;
+}
+
+/* Past day number styling */
+.day-past .day-number,
+.day-past .day-name {
+    color: #9ca3af !important;
+}
+
+/* Past day cards look faded */
+.day-past .calendar-session-card {
+    filter: grayscale(0.4);
+}
+
+/* ── Dark Mode ── */
+[data-theme="dark"] .calendar-container {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .day-name,
+[data-theme="dark"] .time-column-header {
+    color: var(--color-text-secondary);
+}
+
+[data-theme="dark"] .day-number,
+[data-theme="dark"] .sidebar-header h2,
+[data-theme="dark"] .client-name {
+    color: var(--color-text-primary);
+}
+
+[data-theme="dark"] .time-label {
+    color: var(--color-text-tertiary);
+}
+
+[data-theme="dark"] .day-header,
+[data-theme="dark"] .time-row,
+[data-theme="dark"] .time-cell,
+[data-theme="dark"] .week-row,
+[data-theme="dark"] .day-cell {
+    border-color: var(--color-border-light);
+}
+
+[data-theme="dark"] .sidebar-header {
+    border-color: var(--color-border-light);
+}
+
+[data-theme="dark"] .client-item {
+    border-color: var(--color-border-light);
+}
+
+[data-theme="dark"] .client-item:hover {
+    background: var(--color-bg-secondary);
+}
+
+[data-theme="dark"] .search-box {
+    border-color: var(--color-border-medium);
+    color: var(--color-text-primary);
+}
+
+[data-theme="dark"] .search-box input {
+    color: var(--color-text-primary);
+}
+
+[data-theme="dark"] .view-button.active {
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+}
+
+[data-theme="dark"] .calendar-header {
+    border-color: var(--color-border-light);
+}
+
+[data-theme="dark"] .time-cell {
+    border-color: var(--color-border-light);
+}
+
+[data-theme="dark"] .client-avatar-placeholder {
+    background: var(--color-primary);
+}
+
+[data-theme="dark"] .clients-list {
+    background: var(--color-bg-primary);
+}
+
+[data-theme="dark"] .client-name {
+    color: var(--color-text-primary);
+}
+
+[data-theme="dark"] .client-status {
+    color: var(--color-text-secondary);
+}
+
+[data-theme="dark"] .client-avatar,
+[data-theme="dark"] .client-avatar-placeholder {
+    border-color: var(--color-border-light);
+}
+
+/* ── Session Chip Cards ── */
+.calendar-session-chip-wrapper {
+    margin-bottom: 6px;
+}
+
+.calendar-session-chip {
+    display: flex;
+    align-items: stretch;
+    /* background is set inline via category color */
+    border: none;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+    transition: box-shadow 0.15s, transform 0.15s, filter 0.15s;
+    position: relative;
+    min-height: 52px;
+}
+
+.calendar-session-chip:hover {
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
+}
+
+/* Left color accent bar */
+.chip-accent {
+    width: 4px;
+    min-width: 4px;
+    background: var(--chip-color, #4A90E2);
+    flex-shrink: 0;
+}
+
+/* Content area */
+.chip-body {
+    flex: 1;
+    padding: 7px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+/* Small color badge (category label + icon) */
+.chip-category-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 7px;
+    border-radius: 20px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    width: fit-content;
+}
+
+/* Session name */
+.chip-name {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Scheduled time */
+.chip-time {
+    font-size: 0.72rem;
+    color: var(--color-text-tertiary);
+}
+
+/* Delete button */
+.chip-delete-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 8px;
+    background: transparent;
+    border: none;
+    color: var(--color-text-tertiary);
+    cursor: pointer;
+    transition: all 0.15s;
+    flex-shrink: 0;
+    border-radius: 0 8px 8px 0;
+}
+
+.chip-delete-btn:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+/* Month view mini chips */
+.month-session-chip {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+}
+
+.month-session-chip:hover {
+    opacity: 0.85;
+    filter: brightness(1.1);
+}
+
+[data-theme="dark"] .calendar-session-chip {
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .calendar-session-chip:hover {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+}
+
+
+[data-theme="dark"] .clients-list {
+    background: var(--color-bg-primary);
+}
+
+[data-theme="dark"] .client-name {
+    color: var(--color-text-primary);
+}
+
+[data-theme="dark"] .client-status {
+    color: var(--color-text-secondary);
+}
+
+[data-theme="dark"] .client-avatar,
+[data-theme="dark"] .client-avatar-placeholder {
+    border-color: var(--color-border-light);
 }

@@ -149,7 +149,7 @@
     position: relative;
     width: 100%;
     height: 180px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #4A90E2 0%, #3A7BC8 100%);
     overflow: hidden;
 }
 
@@ -192,7 +192,7 @@
 }
 
 .status-badge.status-completed {
-    background: #3b82f6;
+    background: #4A90E2;
     color: white;
 }
 

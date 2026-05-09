@@ -1,7 +1,8 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Users, Calendar, Dumbbell, FolderKanban, UtensilsCrossed } from 'lucide-react';
+import { LayoutDashboard, Users, Calendar, Dumbbell, FolderKanban, UtensilsCrossed, Pill, Moon, Sun } from 'lucide-react';
 import Avatar from '../ui/Avatar';
+import { useTheme } from '../../contexts/ThemeContext';
 import './Sidebar.css';
 
 interface SidebarProps {
@@ -13,6 +14,8 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ user }) => {
+    const { theme, toggleTheme } = useTheme();
+
     const menuItems = [
         { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
         { path: '/clients', icon: Users, label: 'Clients' },
@@ -21,6 +24,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user }) => {
         { path: '/calendar', icon: Calendar, label: 'Calendar' },
         { path: '/exercises', icon: Dumbbell, label: 'Exercise Library' },
         { path: '/meals', icon: UtensilsCrossed, label: 'Meals' },
+        { path: '/supplements', icon: Pill, label: 'Compléments' },
     ];
 
     return (
@@ -47,8 +51,21 @@ const Sidebar: React.FC<SidebarProps> = ({ user }) => {
                 ))}
             </nav>
 
-            {user && (
-                <div className="sidebar__footer">
+            <div className="sidebar__footer">
+                {/* Theme toggle */}
+                <button
+                    className="sidebar__theme-toggle"
+                    onClick={toggleTheme}
+                    title={theme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre'}
+                >
+                    {theme === 'dark' ? (
+                        <Sun size={18} className="sidebar__theme-icon sidebar__theme-icon--sun" />
+                    ) : (
+                        <Moon size={18} className="sidebar__theme-icon sidebar__theme-icon--moon" />
+                    )}
+                </button>
+
+                {user && (
                     <div className="sidebar__user">
                         <Avatar
                             src={user.profilePictureUrl}
@@ -62,8 +79,8 @@ const Sidebar: React.FC<SidebarProps> = ({ user }) => {
                             <div className="sidebar__user-role">Coach</div>
                         </div>
                     </div>
-                </div>
-            )}
+                )}
+            </div>
         </aside>
     );
 };

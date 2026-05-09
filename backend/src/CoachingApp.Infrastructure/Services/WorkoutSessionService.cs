@@ -191,19 +191,88 @@ namespace CoachingApp.Infrastructure.Services
         public async Task DeleteWorkoutSessionAsync(int workoutSessionId)
         {
             var session = await _repository.GetWorkoutSessionByIdAsync(workoutSessionId);
-            if (session != null)
+            if (session == null) return;
+
+            if (session.AssignedClients.Any())
             {
-                if (!string.IsNullOrEmpty(session.VoiceMessageFileName))
-                {
-                    DeleteFile(session.VoiceMessageFileName);
-                }
-                if (!string.IsNullOrEmpty(session.CoverImageFileName))
-                {
-                    DeleteFile(session.CoverImageFileName);
-                }
+                throw new InvalidOperationException(
+                    "Impossible de supprimer une session déjà assignée à un ou plusieurs clients. " +
+                    "Désassignez d'abord les clients.");
             }
 
+            if (!string.IsNullOrEmpty(session.VoiceMessageFileName))
+                DeleteFile(session.VoiceMessageFileName);
+            if (!string.IsNullOrEmpty(session.CoverImageFileName))
+                DeleteFile(session.CoverImageFileName);
+
             await _repository.DeleteWorkoutSessionAsync(workoutSessionId);
+        }
+
+        /// <summary>
+        /// Toggles the Active/Draft status of a workout session.
+        /// Cannot deactivate a session that is currently assigned to clients.
+        /// </summary>
+        public async Task<WorkoutSessionResponse> SetStatusAsync(int workoutSessionId, string newStatus)
+        {
+            var session = await _repository.GetWorkoutSessionByIdAsync(workoutSessionId)
+                ?? throw new KeyNotFoundException($"Workout session {workoutSessionId} not found");
+
+            var goingInactive = !string.Equals(newStatus, "Active", StringComparison.OrdinalIgnoreCase);
+            if (goingInactive && session.AssignedClients.Any())
+            {
+                throw new InvalidOperationException(
+                    "Impossible de désactiver une session déjà assignée à un ou plusieurs clients.");
+            }
+
+            session.Status = newStatus;
+            session.UpdatedAt = DateTime.UtcNow;
+            await _repository.UpdateWorkoutSessionAsync(session);
+            return MapToResponse(session);
+        }
+
+        /// <summary>
+        /// Returns a server-side draft copy of the source session — same name suffixed with "(Copie)",
+        /// status forced to Draft, no assigned clients. The frontend opens this in the create modal
+        /// for the coach to review and confirm before saving.
+        /// </summary>
+        public async Task<WorkoutSessionResponse> BuildDuplicateDraftAsync(int sourceId)
+        {
+            var src = await _repository.GetWorkoutSessionByIdAsync(sourceId)
+                ?? throw new KeyNotFoundException($"Workout session {sourceId} not found");
+
+            // Detached, in-memory only — caller will POST it back to /WorkoutSessions to persist.
+            var draft = new WorkoutSessionResponse
+            {
+                WorkoutSessionId = 0,
+                Name = $"{src.Name} (Copie)",
+                Description = src.Description,
+                Category = src.Category,
+                Status = "Draft",
+                Duration = src.Duration,
+                ExerciseCount = src.Exercises.Count,
+                MuscleGroups = ExtractMuscleGroups(src),
+                AssignedClientsCount = 0,
+                Exercises = src.Exercises
+                    .OrderBy(e => e.OrderIndex)
+                    .Select(e => new WorkoutSessionExerciseDto
+                    {
+                        WorkoutSessionExerciseId = 0,
+                        ExerciseTemplateId = e.ExerciseTemplateId,
+                        ExerciseName = e.ExerciseTemplate?.Name ?? "",
+                        ExerciseCategory = e.ExerciseTemplate?.Category,
+                        ExerciseVideoUrl = e.ExerciseTemplate?.VideoUrl,
+                        ExerciseThumbnailUrl = e.ExerciseTemplate?.ThumbnailUrl,
+                        OrderIndex = e.OrderIndex,
+                        Sets = e.Sets,
+                        Reps = e.Reps,
+                        RestSeconds = e.RestSeconds,
+                        Notes = e.Notes
+                    })
+                    .ToList(),
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+            return draft;
         }
 
         private async Task<(string Url, string FileName)> SaveVoiceFileAsync(int coachId, IFormFile voiceFile)
@@ -264,6 +333,21 @@ namespace CoachingApp.Infrastructure.Services
             }
         }
 
+        /// <summary>
+        /// Returns the distinct muscle-group categories used across the session's exercises,
+        /// sorted by frequency (most-used first). Empty entries are filtered out.
+        /// </summary>
+        private static List<string> ExtractMuscleGroups(WorkoutSession session)
+        {
+            return session.Exercises
+                .Select(e => e.ExerciseTemplate?.Category)
+                .Where(c => !string.IsNullOrWhiteSpace(c))
+                .GroupBy(c => c!)
+                .OrderByDescending(g => g.Count())
+                .Select(g => g.Key)
+                .ToList();
+        }
+
         private WorkoutSessionResponse MapToResponse(WorkoutSession session)
         {
             return new WorkoutSessionResponse
@@ -278,7 +362,9 @@ namespace CoachingApp.Infrastructure.Services
                 StartDate = session.StartDate,
                 EndDate = session.EndDate,
                 ExerciseCount = session.Exercises.Count,
-                Duration = session.Duration,  // Map duration field
+                Duration = session.Duration,
+                MuscleGroups = ExtractMuscleGroups(session),
+                AssignedClientsCount = session.AssignedClients.Count,
                 Exercises = session.Exercises
                     .OrderBy(e => e.OrderIndex)
                     .Select(e => new WorkoutSessionExerciseDto

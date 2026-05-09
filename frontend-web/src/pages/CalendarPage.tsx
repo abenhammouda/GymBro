@@ -4,8 +4,20 @@ import MainLayout from '../components/layout/MainLayout';
 import ImportWorkoutModal from '../components/ImportWorkoutModal';
 import { format, startOfWeek, endOfWeek, addDays, addWeeks, subWeeks, addMonths, subMonths, startOfMonth, endOfMonth, isSameMonth, isSameDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import type { AssignedClient, ScheduledWorkoutSession, WorkoutSession, ScheduledMeal, Meal, CalendarEventType } from '../types';
-import { isScheduledWorkout, isScheduledMeal } from '../types';
+import type { AssignedClient, ScheduledWorkoutSession, WorkoutSession, ScheduledMeal, CalendarEventType } from '../types';
+import { isScheduledWorkout } from '../types';
+
+const CATEGORY_GRADIENTS: Record<string, string> = {
+    UpperBody:   'linear-gradient(135deg, #1e88e5 0%, #1565c0 100%)',
+    LowerBody:   'linear-gradient(135deg, #43a047 0%, #2e7d32 100%)',
+    Cardio:      'linear-gradient(135deg, #e53935 0%, #b71c1c 100%)',
+    Core:        'linear-gradient(135deg, #fb8c00 0%, #e65100 100%)',
+    Flexibility: 'linear-gradient(135deg, #8e24aa 0%, #4a148c 100%)',
+    Other:       'linear-gradient(135deg, #546e7a 0%, #263238 100%)',
+};
+
+const getCategoryGradient = (category?: string): string =>
+    (category && CATEGORY_GRADIENTS[category]) || CATEGORY_GRADIENTS.Other;
 import { clientService } from '../services/client.service';
 import { scheduledWorkoutSessionService } from '../services/scheduledWorkoutSession.service';
 import { scheduledMealService } from '../services/scheduledMeal.service';
@@ -63,7 +75,6 @@ const CalendarPage = () => {
     const [scheduledMeals, setScheduledMeals] = useState<ScheduledMeal[]>([]);
     const [loading, setLoading] = useState(true);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-    const [isImportMealModalOpen, setIsImportMealModalOpen] = useState(false);
     const [hoveredClient, setHoveredClient] = useState<AssignedClient | null>(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [sessionToDeleteId, setSessionToDeleteId] = useState<number | null>(null);
@@ -376,9 +387,8 @@ const CalendarPage = () => {
                                             const isWorkout = isScheduledWorkout(event);
                                             const id = isWorkout ? event.scheduledWorkoutSessionId : event.scheduledMealId;
                                             const name = isWorkout ? event.workoutSession?.name : event.meal?.name;
-                                            const imageUrl = isWorkout ? event.workoutSession?.coverImageUrl : event.meal?.imageUrl;
                                             const gradient = isWorkout
-                                                ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                                                ? getCategoryGradient(event.workoutSession?.category)
                                                 : 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)';
 
                                             return (
@@ -399,26 +409,17 @@ const CalendarPage = () => {
                                                             boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
                                                         }}
                                                     >
-                                                        {/* Image on the left */}
+                                                        {/* Category color on the left */}
                                                         <div style={{
-                                                            width: '120px',
-                                                            minWidth: '120px',
-                                                            backgroundImage: imageUrl
-                                                                ? `url(${imageUrl.startsWith('http')
-                                                                    ? imageUrl
-                                                                    : `${import.meta.env.VITE_API_URL}${imageUrl}`
-                                                                })`
-                                                                : gradient,
-                                                            backgroundSize: 'cover',
-                                                            backgroundPosition: 'center',
+                                                            width: '80px',
+                                                            minWidth: '80px',
+                                                            background: gradient,
                                                             flexShrink: 0,
                                                             display: 'flex',
                                                             alignItems: 'center',
                                                             justifyContent: 'center'
                                                         }}>
-                                                            {!imageUrl && (
-                                                                isWorkout ? <Dumbbell size={32} color="white" /> : <UtensilsCrossed size={32} color="white" />
-                                                            )}
+                                                            {isWorkout ? <Dumbbell size={28} color="white" /> : <UtensilsCrossed size={28} color="white" />}
                                                         </div>
 
                                                         {/* Content on the right */}
@@ -512,27 +513,23 @@ const CalendarPage = () => {
                                 flexDirection: 'row',
                                 overflow: 'hidden'
                             }}>
-                                {/* Image on the left */}
+                                {/* Category color on the left */}
                                 <div style={{
-                                    width: '100px',
-                                    minWidth: '100px',
-                                    backgroundImage: isScheduledWorkout(activeEvent) && activeEvent.workoutSession?.coverImageUrl
-                                        ? `url(${activeEvent.workoutSession.coverImageUrl.startsWith('http')
-                                            ? activeEvent.workoutSession.coverImageUrl
-                                            : `${import.meta.env.VITE_API_URL}${activeEvent.workoutSession.coverImageUrl}`
-                                        })`
-                                        : isScheduledMeal(activeEvent) && activeEvent.meal?.imageUrl
-                                            ? `url(${activeEvent.meal.imageUrl.startsWith('http')
-                                                ? activeEvent.meal.imageUrl
-                                                : `${import.meta.env.VITE_API_URL}${activeEvent.meal.imageUrl}`
-                                            })`
-                                            : isScheduledWorkout(activeEvent)
-                                                ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-                                                : 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-                                    backgroundSize: 'cover',
-                                    backgroundPosition: 'center',
-                                    flexShrink: 0
-                                }} />
+                                    width: '80px',
+                                    minWidth: '80px',
+                                    background: isScheduledWorkout(activeEvent)
+                                        ? getCategoryGradient(activeEvent.workoutSession?.category)
+                                        : 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                                    flexShrink: 0,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}>
+                                    {isScheduledWorkout(activeEvent)
+                                        ? <Dumbbell size={28} color="white" />
+                                        : <UtensilsCrossed size={28} color="white" />
+                                    }
+                                </div>
 
                                 {/* Content on the right */}
                                 <div style={{

@@ -81,6 +81,12 @@ builder.Services.AddScoped<IWorkoutSessionRepository, WorkoutSessionRepository>(
 // Register Exercise Template Service
 builder.Services.AddScoped<ExerciseTemplateService>();
 
+// Register Video Import Services (AI-powered exercise detection)
+builder.Services.AddScoped<VideoImportService>();
+builder.Services.AddScoped<GeminiVisionService>();
+builder.Services.AddScoped<YouTubeMetadataService>();
+builder.Services.AddScoped<GoogleDriveService>();
+
 // Register Program Template Service
 builder.Services.AddScoped<ProgramTemplateService>();
 
@@ -100,6 +106,13 @@ builder.Services.AddScoped<WorkoutImageAssignmentService>();
 builder.Services.AddScoped<MealTabService>();
 builder.Services.AddScoped<MealService>();
 builder.Services.AddScoped<IScheduledMealService, ScheduledMealService>();
+
+// Register Progress & Macro Services
+builder.Services.AddScoped<MacroPlanService>();
+builder.Services.AddScoped<WeeklyProgressService>();
+
+// Register Supplement Set Service
+builder.Services.AddScoped<SupplementSetService>();
 
 // Configure CORS
 builder.Services.AddCors(options =>

@@ -6,7 +6,7 @@ function DroppableDay({ id, children, className }: { id: string, children: React
     });
 
     const style = {
-        backgroundColor: isOver ? 'rgba(102, 126, 234, 0.1)' : undefined,
+        backgroundColor: isOver ? 'rgba(59, 130, 246, 0.1)' : undefined,
         height: '100%',
         minHeight: '100px', // Ensure drop target has height even if empty
     };

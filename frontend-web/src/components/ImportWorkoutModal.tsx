@@ -99,7 +99,7 @@ const ImportWorkoutModal = ({ isOpen, onClose, onSelectWorkout }: ImportWorkoutM
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
-                                            color: '#667eea'
+                                            color: '#3b82f6'
                                         }}>
                                             <Dumbbell size={20} />
                                         </div>

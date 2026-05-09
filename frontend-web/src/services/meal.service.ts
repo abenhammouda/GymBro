@@ -10,14 +10,10 @@ export const mealService = {
     createMeal: async (data: CreateMealRequest, imageFile?: File): Promise<Meal> => {
         const formData = new FormData();
         formData.append('mealData', JSON.stringify(data));
-        if (imageFile) {
-            formData.append('imageFile', imageFile);
-        }
+        if (imageFile) formData.append('imageFile', imageFile);
 
         const response = await api.post('/meals', formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data'
-            }
+            headers: { 'Content-Type': 'multipart/form-data' }
         });
         return response.data;
     },
@@ -25,14 +21,10 @@ export const mealService = {
     updateMeal: async (mealId: number, data: UpdateMealRequest, imageFile?: File): Promise<Meal> => {
         const formData = new FormData();
         formData.append('mealData', JSON.stringify(data));
-        if (imageFile) {
-            formData.append('imageFile', imageFile);
-        }
+        if (imageFile) formData.append('imageFile', imageFile);
 
         const response = await api.put(`/meals/${mealId}`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data'
-            }
+            headers: { 'Content-Type': 'multipart/form-data' }
         });
         return response.data;
     },

@@ -14,6 +14,19 @@ namespace CoachingApp.Core.DTOs
         public DateTime? EndDate { get; set; }
         public int ExerciseCount { get; set; }
         public int? Duration { get; set; } // Duration in minutes
+
+        /// <summary>
+        /// Distinct muscle group categories detected from the workout exercises,
+        /// ordered by frequency (most-used first). Used for icon rendering on the list page.
+        /// </summary>
+        public List<string> MuscleGroups { get; set; } = new();
+
+        /// <summary>
+        /// Number of clients currently assigned to this session.
+        /// Frontend uses this to disable Delete/Deactivate when > 0.
+        /// </summary>
+        public int AssignedClientsCount { get; set; }
+
         public List<WorkoutSessionExerciseDto> Exercises { get; set; } = new();
         public List<AssignedClientResponse> AssignedClients { get; set; } = new();
         public DateTime CreatedAt { get; set; }
@@ -85,5 +98,10 @@ namespace CoachingApp.Core.DTOs
     public class AssignClientsRequest
     {
         public List<int> AdherentIds { get; set; } = new();
+    }
+
+    public class SetStatusRequest
+    {
+        public string Status { get; set; } = "Active";
     }
 }

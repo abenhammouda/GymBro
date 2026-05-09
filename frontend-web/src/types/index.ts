@@ -490,7 +490,6 @@ export interface CreateMealTabRequest {
 export interface MealIngredient {
     name: string;
     quantityGrams: number;
-    type: 'Aliment' | 'Complement';
     orderIndex: number;
 }
 
@@ -499,7 +498,6 @@ export interface Meal {
     mealTabId: number;
     name: string;
     description?: string;
-    imageUrl?: string;
     orderIndex: number;
     ingredients: MealIngredient[];
     createdAt: string;

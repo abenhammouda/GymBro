@@ -1,3 +1,528 @@
+/* ============================
+   Meals Page - Table View
+   (prefixed .ml-* to avoid clashes with the legacy modal styles below)
+   ============================ */
+
+.ml-page {
+    padding: 1.5rem 2rem 3rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* Header */
+.ml-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.ml-header h1 {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #111827;
+    letter-spacing: -0.02em;
+}
+
+.ml-header p {
+    margin: 0.25rem 0 0;
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+.ml-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.1rem;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+}
+
+.ml-btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+}
+
+/* Tabs row */
+.ml-tabs {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.ml-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.9rem;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #4b5563;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.ml-tab:hover {
+    background: #f9fafb;
+    border-color: #d1d5db;
+}
+
+.ml-tab.active {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    border-color: transparent;
+    color: white;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+}
+
+.ml-tab-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 0.4rem;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+}
+
+.ml-tab.active .ml-tab-count {
+    background: rgba(255, 255, 255, 0.25);
+    color: white;
+}
+
+.ml-tab-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    margin-left: -0.15rem;
+    border-radius: 50%;
+    color: inherit;
+    opacity: 0.55;
+    transition: all 0.15s;
+}
+
+.ml-tab-close:hover {
+    opacity: 1;
+    background: rgba(0, 0, 0, 0.06);
+}
+
+.ml-tab.active .ml-tab-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.ml-tab-add {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: white;
+    border: 1px dashed #d1d5db;
+    border-radius: 50%;
+    color: #6b7280;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.ml-tab-add:hover {
+    border-color: #3b82f6;
+    color: #3b82f6;
+    background: #eff6ff;
+}
+
+/* Toolbar */
+.ml-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: white;
+    padding: 0.75rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    margin-bottom: 1rem;
+}
+
+.ml-search {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.85rem;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    color: #9ca3af;
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.ml-search:focus-within {
+    background: white;
+    border-color: #3b82f6;
+}
+
+.ml-search input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 0.9rem;
+    color: #111827;
+}
+
+.ml-filter-select {
+    padding: 0.55rem 1.85rem 0.55rem 0.85rem;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    color: #374151;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.6rem center;
+    transition: border-color 0.15s;
+}
+
+.ml-filter-select:hover,
+.ml-filter-select:focus {
+    border-color: #3b82f6;
+    outline: none;
+}
+
+/* Loading & empty */
+.ml-loading,
+.ml-empty {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 4rem 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    text-align: center;
+    color: #6b7280;
+}
+
+.ml-empty h3 {
+    margin: 0.5rem 0 0;
+    color: #111827;
+    font-size: 1.1rem;
+}
+
+.ml-empty p {
+    margin: 0;
+    color: #6b7280;
+}
+
+.ml-empty svg {
+    color: #d1d5db;
+}
+
+.ml-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid #e5e7eb;
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    animation: ml-spin 0.7s linear infinite;
+}
+
+@keyframes ml-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Table */
+.ml-table-wrap {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    /* overflow visible so the kebab menu can escape the bottom edge */
+    overflow: visible;
+}
+
+/* Round the inner corners so the table thead/tfoot don't escape */
+.ml-table-wrap > .ml-table thead tr:first-child th:first-child {
+    border-top-left-radius: 14px;
+}
+.ml-table-wrap > .ml-table thead tr:first-child th:last-child {
+    border-top-right-radius: 14px;
+}
+
+.ml-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.ml-table thead {
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.ml-table thead th {
+    text-align: left;
+    padding: 0.75rem 1rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ml-table tbody tr {
+    border-bottom: 1px solid #f3f4f6;
+    transition: background 0.12s;
+    cursor: pointer;
+}
+
+.ml-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.ml-table tbody tr:hover {
+    background: #f9fafb;
+}
+
+.ml-table tbody td {
+    padding: 0.85rem 1rem;
+    vertical-align: middle;
+}
+
+.ml-col-num {
+    width: 130px;
+    white-space: nowrap;
+}
+
+.ml-col-actions {
+    width: 56px;
+    text-align: right;
+}
+
+.ml-muted {
+    color: #6b7280;
+    font-size: 0.85rem;
+}
+
+/* Meal cell */
+.ml-meal-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    min-width: 0;
+}
+
+.ml-meal-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.ml-meal-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+}
+
+.ml-meal-name {
+    font-weight: 600;
+    color: #111827;
+    font-size: 0.92rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ml-meal-sub {
+    font-size: 0.78rem;
+    color: #6b7280;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 320px;
+}
+
+/* Category chip */
+.ml-cat-chip {
+    display: inline-block;
+    padding: 0.22rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* Ingredients cell */
+.ml-ing-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.ml-ing-total {
+    font-weight: 600;
+    color: #111827;
+    font-size: 0.95rem;
+}
+
+.ml-ing-sub {
+    font-size: 0.72rem;
+    color: #9ca3af;
+}
+
+/* Pending AI placeholder */
+.ml-ai-pending {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0.65rem;
+    background: linear-gradient(135deg, #faf5ff, #ede9fe);
+    color: #7c3aed;
+    border: 1px dashed #c4b5fd;
+    border-radius: 999px;
+    font-size: 0.74rem;
+    font-weight: 500;
+}
+
+/* Kebab menu */
+.ml-action-wrap {
+    position: relative;
+    display: inline-block;
+}
+
+.ml-kebab-btn {
+    background: none;
+    border: none;
+    padding: 0.4rem;
+    border-radius: 8px;
+    color: #9ca3af;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ml-kebab-btn:hover {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.ml-action-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 0.4rem;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    min-width: 180px;
+    padding: 0.35rem;
+    z-index: 30;
+    animation: ml-menu-in 0.12s ease-out;
+}
+
+/* Flip the menu upward when row is near the bottom of the table */
+.ml-action-menu.flip-up {
+    top: auto;
+    bottom: 100%;
+    margin-top: 0;
+    margin-bottom: 0.4rem;
+    animation: ml-menu-in-up 0.12s ease-out;
+}
+
+@keyframes ml-menu-in-up {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ml-menu-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.ml-menu-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.55rem 0.7rem;
+    background: none;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    color: #374151;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.12s;
+}
+
+.ml-menu-item:hover:not(:disabled) {
+    background: #f3f4f6;
+}
+
+.ml-menu-item-danger {
+    color: #dc2626;
+}
+
+.ml-menu-item-danger:hover:not(:disabled) {
+    background: #fef2f2;
+}
+
+.ml-menu-sep {
+    height: 1px;
+    background: #f3f4f6;
+    margin: 0.25rem 0;
+}
+
+/* Responsive */
+@media (max-width: 1000px) {
+    .ml-table thead th:nth-child(4),
+    .ml-table tbody td:nth-child(4) {
+        display: none;
+    }
+}
+
+@media (max-width: 800px) {
+    .ml-toolbar { flex-direction: column; align-items: stretch; }
+    .ml-table thead th:nth-child(3),
+    .ml-table tbody td:nth-child(3),
+    .ml-table thead th:nth-child(5),
+    .ml-table tbody td:nth-child(5) {
+        display: none;
+    }
+}
+
+/* ============================
+   Legacy modal styles (kept as-is for the create/edit dialogs)
+   ============================ */
+
 .meals-page {
     padding: 2rem;
     max-width: 1400px;
@@ -28,18 +553,19 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.75rem 1.5rem;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #1e88e5;
     color: white;
     border: none;
     border-radius: 8px;
     font-weight: 600;
     cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
 }
 
 .btn-primary:hover {
+    background: #1976d2;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 4px 12px rgba(30, 136, 229, 0.35);
 }
 
 .btn-secondary {
@@ -92,9 +618,9 @@
 }
 
 .tab.active {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #1e88e5;
     color: white;
-    border-color: #667eea;
+    border-color: #1e88e5;
 }
 
 .meal-count {
@@ -150,47 +676,54 @@
 /* Meals Grid */
 .meals-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
 }
 
 .meal-card {
     background: white;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
     transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .meal-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
-.meal-image {
-    height: 200px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    background-size: cover;
-    background-position: center;
-    position: relative;
+.meal-card-header {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
+    padding: 0.85rem 1rem 0.65rem;
+}
+
+.meal-card-title-group {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
 }
 
 .default-meal-icon {
-    color: rgba(255, 255, 255, 0.6);
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: #1e88e5;
+    color: rgba(255, 255, 255, 0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
 }
 
 .delete-meal-btn {
-    position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
-    background: rgba(255, 255, 255, 0.9);
+    background: #fef2f2;
     border: none;
-    border-radius: 50%;
-    width: 32px;
-    height: 32px;
+    border-radius: 8px;
+    width: 30px;
+    height: 30px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -205,36 +738,36 @@
 }
 
 .meal-content {
-    padding: 1.5rem;
+    padding: 0 1rem 1rem;
 }
 
-.meal-content h3 {
-    font-size: 1.25rem;
-    font-weight: 700;
+.meal-card-title-group h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
     color: #1a1a1a;
-    margin-bottom: 0.5rem;
+    margin: 0;
 }
 
 .meal-description {
     color: #666;
     font-size: 0.875rem;
-    margin-bottom: 1rem;
+    margin-bottom: 0.8rem;
     line-height: 1.5;
 }
 
 /* Ingredients Display */
 .meal-ingredients {
-    margin-top: 1rem;
+    margin-top: 0.5rem;
 }
 
 .ingredient-section {
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
 }
 
 .ingredient-section h4 {
     font-size: 0.875rem;
     font-weight: 600;
-    color: #667eea;
+    color: #1e88e5;
     margin-bottom: 0.5rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -243,11 +776,11 @@
 .ingredient-item {
     display: flex;
     justify-content: space-between;
-    padding: 0.4rem 0.75rem;
+    padding: 0.3rem 0.55rem;
     background: #f8f9fa;
     border-radius: 4px;
-    font-size: 0.875rem;
-    margin-bottom: 0.25rem;
+    font-size: 0.84rem;
+    margin-bottom: 0.2rem;
 }
 
 .ingredient-item span:first-child {
@@ -255,7 +788,7 @@
 }
 
 .ingredient-item span:last-child {
-    color: #667eea;
+    color: #1e88e5;
     font-weight: 600;
 }
 
@@ -298,7 +831,7 @@
     width: 40px;
     height: 40px;
     border: 4px solid #f3f3f3;
-    border-top: 4px solid #667eea;
+    border-top: 4px solid #1e88e5;
     border-radius: 50%;
     animation: spin 1s linear infinite;
     margin-bottom: 1rem;
@@ -392,7 +925,7 @@
 .form-group input:focus,
 .form-group textarea:focus {
     outline: none;
-    border-color: #667eea;
+    border-color: #1e88e5;
 }
 
 /* Ingredients Section in Modal */
@@ -413,7 +946,7 @@
 .section-header h3 {
     font-size: 1.1rem;
     font-weight: 600;
-    color: #667eea;
+    color: #1e88e5;
     margin: 0;
 }
 
@@ -422,7 +955,7 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.5rem 1rem;
-    background: #667eea;
+    background: #1e88e5;
     color: white;
     border: none;
     border-radius: 6px;
@@ -433,7 +966,7 @@
 }
 
 .btn-add-ingredient:hover {
-    background: #5568d3;
+    background: #1976d2;
 }
 
 .ingredient-row {
@@ -452,7 +985,7 @@
 
 .ingredient-row input:focus {
     outline: none;
-    border-color: #667eea;
+    border-color: #1e88e5;
 }
 
 .btn-remove-ingredient {
@@ -640,4 +1173,29 @@
         width: 100%;
         justify-content: center;
     }
+}
+
+.meal-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.edit-meal-btn {
+    background: #e3f2fd;
+    border: none;
+    border-radius: 8px;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #1e88e5;
+}
+
+.edit-meal-btn:hover {
+    background: #1e88e5;
+    color: white;
 }

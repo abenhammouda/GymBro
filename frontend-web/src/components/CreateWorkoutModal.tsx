@@ -228,7 +228,8 @@ const CreateWorkoutModal = ({ isOpen, onClose, onSave, exercises, editingSession
         const workoutData = {
             name: workoutName,
             description: '',
-            duration: duration, // Durée en minutes
+            duration: duration,
+            category: selectedMuscleGroup || 'General',
             exercises: configuredExercises.map((ex, index) => ({
                 exerciseTemplateId: ex.exerciseTemplateId,
                 orderIndex: index,

@@ -1,3 +1,5 @@
+using CoachingApp.Core.Enums;
+
 namespace CoachingApp.Core.Entities;
 
 public class Adherent
@@ -11,6 +13,9 @@ public class Adherent
     public DateTime? DateOfBirth { get; set; }
     public string? Gender { get; set; }
     public decimal? Height { get; set; }
+    public decimal? InitialWeight { get; set; }          // poids lors de la souscription (kg)
+    public WorkNature? WorkNature { get; set; }          // nature du travail
+    public GoalType? GoalType { get; set; }              // objectif fitness
     public bool IsEmailVerified { get; set; } = false;
     public string? VerificationCode { get; set; }
     public DateTime? VerificationCodeExpiry { get; set; }
@@ -20,4 +25,5 @@ public class Adherent
     // Navigation properties
     public ICollection<CoachClient> CoachClients { get; set; } = new List<CoachClient>();
     public ICollection<WeightLog> WeightLogs { get; set; } = new List<WeightLog>();
+    public ICollection<IntakePhoto> IntakePhotos { get; set; } = new List<IntakePhoto>();
 }
