@@ -1,13 +1,57 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Pencil, Sparkles } from 'lucide-react';
+import { Plus, Search, Pencil, Sparkles, Clock } from 'lucide-react';
 import MainLayout from '../components/layout/MainLayout';
 import ChatPopup from '../components/ChatPopup';
 import ExerciseTemplateModal from '../components/ExerciseTemplateModal';
 import ExerciseViewerModal from '../components/ExerciseViewerModal';
 import BulkAIImportModal from '../components/BulkAIImportModal';
+import Pagination from '../components/common/Pagination';
 import exerciseTemplateService from '../services/exerciseTemplate.service';
 import type { ExerciseTemplate, ExerciseCategory } from '../types';
 import './ExerciseLibraryPage.css';
+
+// ─── Constants ───────────────────────────────────────────────
+
+const CATEGORY_COLORS: Record<string, { bg: string; fg: string }> = {
+    'Pectoraux':   { bg: '#fef3c7', fg: '#d97706' },
+    'Épaules':     { bg: '#d1fae5', fg: '#059669' },
+    'Dos':         { bg: '#dbeafe', fg: '#2563eb' },
+    'Jambes':      { bg: '#ede9fe', fg: '#7c3aed' },
+    'Core':        { bg: '#fce7f3', fg: '#db2777' },
+    'Cardio':      { bg: '#fee2e2', fg: '#dc2626' },
+    'Flexibility': { bg: '#ccfbf1', fg: '#0d9488' },
+    'Other':       { bg: '#f3f4f6', fg: '#6b7280' },
+};
+
+const PRIMARY_FILTERS = ['All', 'Upper Body', 'Lower Body'];
+const MUSCLE_FILTERS  = ['Pectoraux', 'Épaules', 'Dos', 'Jambes', 'Core', 'Cardio', 'Flexibility', 'Other'];
+
+// ─── Helpers ─────────────────────────────────────────────────
+
+const formatDuration = (seconds: number): string => {
+    if (seconds < 60) return `${seconds} sec`;
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return s > 0 ? `${m}m ${s}s` : `${m} min`;
+};
+
+const getYouTubeVideoId = (url: string): string | null => {
+    if (!url) return null;
+    const m = url.match(/^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|shorts\/)([^#&?]*).*/);
+    return m && m[2].length === 11 ? m[2] : null;
+};
+
+const getYouTubeEmbedUrl = (url: string): string | null => {
+    const id = getYouTubeVideoId(url);
+    return id ? `https://www.youtube.com/embed/${id}` : null;
+};
+
+const getYouTubeThumbnail = (url: string): string | null => {
+    const id = getYouTubeVideoId(url);
+    return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : null;
+};
+
+// ─── Main component ──────────────────────────────────────────
 
 const ExerciseLibraryPage: React.FC = () => {
     const [exercises, setExercises] = useState<ExerciseTemplate[]>([]);
@@ -22,14 +66,14 @@ const ExerciseLibraryPage: React.FC = () => {
     const [viewedExercise, setViewedExercise] = useState<ExerciseTemplate | null>(null);
     const [playingExerciseId, setPlayingExerciseId] = useState<number | null>(null);
     const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(12);
 
-    useEffect(() => {
-        loadExercises();
-    }, []);
+    useEffect(() => { loadExercises(); }, []);
 
-    useEffect(() => {
-        filterExercises();
-    }, [selectedCategory, searchQuery, exercises]);
+    useEffect(() => { filterExercises(); }, [selectedCategory, searchQuery, exercises]);
+
+    useEffect(() => { setPage(1); }, [selectedCategory, searchQuery]);
 
     const loadExercises = async () => {
         try {
@@ -37,7 +81,7 @@ const ExerciseLibraryPage: React.FC = () => {
             const data = await exerciseTemplateService.getExerciseTemplates();
             setExercises(data);
         } catch (err: any) {
-            setError(err.message || 'Failed to load exercises');
+            setError(err.message || 'Erreur lors du chargement');
         } finally {
             setIsLoading(false);
         }
@@ -45,48 +89,20 @@ const ExerciseLibraryPage: React.FC = () => {
 
     const filterExercises = () => {
         let filtered = exercises;
-
-        // Filter by category
         if (selectedCategory !== 'All') {
-            filtered = filtered.filter(ex => {
-                // Check if it matches the primary category
-                if (ex.category === selectedCategory) return true;
-                // Check if it matches the secondary category (Upper Body or Lower Body)
-                if (ex.category2 === selectedCategory.replace(' ', '')) return true;
-                return false;
-            });
-        }
-
-        // Filter by search query
-        if (searchQuery) {
             filtered = filtered.filter(ex =>
-                ex.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                ex.description?.toLowerCase().includes(searchQuery.toLowerCase())
+                ex.category === selectedCategory ||
+                ex.category2 === selectedCategory.replace(' ', '')
             );
         }
-
+        if (searchQuery) {
+            const q = searchQuery.toLowerCase();
+            filtered = filtered.filter(ex =>
+                ex.name.toLowerCase().includes(q) ||
+                ex.description?.toLowerCase().includes(q)
+            );
+        }
         setFilteredExercises(filtered);
-    };
-
-    const formatDuration = (seconds: number): string => {
-        if (seconds < 60) return `${seconds} sec`;
-        const minutes = Math.floor(seconds / 60);
-        const remainingSeconds = seconds % 60;
-        return remainingSeconds > 0 ? `${minutes}m ${remainingSeconds}s` : `${minutes} min`;
-    };
-
-    const getCategoryBadgeClass = (category: ExerciseCategory): string => {
-        const categoryMap: Record<string, string> = {
-            'Pectoraux': 'pectoraux',
-            'Épaules': 'epaules',
-            'Dos': 'dos',
-            'Jambes': 'jambes',
-            'Core': 'core',
-            'Cardio': 'cardio',
-            'Flexibility': 'flexibility',
-            'Other': 'other'
-        };
-        return categoryMap[category] || 'other';
     };
 
     const handleOpenModal = (exercise?: ExerciseTemplate) => {
@@ -94,28 +110,15 @@ const ExerciseLibraryPage: React.FC = () => {
         setIsModalOpen(true);
     };
 
-    const handleCloseModal = () => {
-        setIsModalOpen(false);
-        setSelectedExercise(null);
-    };
+    const handleCloseModal = () => { setIsModalOpen(false); setSelectedExercise(null); };
 
     const handleSaveExercise = async (exerciseData: Partial<ExerciseTemplate>, videoFile?: File) => {
         try {
             if (selectedExercise) {
-                // Update existing exercise
-                await exerciseTemplateService.updateExerciseTemplate(
-                    selectedExercise.exerciseTemplateId,
-                    exerciseData as any,
-                    videoFile
-                );
+                await exerciseTemplateService.updateExerciseTemplate(selectedExercise.exerciseTemplateId, exerciseData as any, videoFile);
             } else {
-                // Create new exercise
-                await exerciseTemplateService.createExerciseTemplate(
-                    exerciseData as any,
-                    videoFile
-                );
+                await exerciseTemplateService.createExerciseTemplate(exerciseData as any, videoFile);
             }
-            // Reload exercises
             await loadExercises();
             handleCloseModal();
         } catch (err: any) {
@@ -129,219 +132,177 @@ const ExerciseLibraryPage: React.FC = () => {
         setIsViewerOpen(true);
     };
 
-    const handleCloseViewer = () => {
-        setIsViewerOpen(false);
-        setViewedExercise(null);
-    };
+    const pageCount = Math.max(1, Math.ceil(filteredExercises.length / pageSize));
+    const pagedExercises = filteredExercises.slice((page - 1) * pageSize, page * pageSize);
 
-    const getYouTubeEmbedUrl = (url: string): string | null => {
-        if (!url) return null;
-
-        // Extract video ID from various YouTube URL formats including Shorts
-        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|shorts\/)([^#&?]*).*/;
-        const match = url.match(regExp);
-
-        if (match && match[2].length === 11) {
-            // Return embed URL
-            return `https://www.youtube.com/embed/${match[2]}`;
-        }
-
-        return null;
-    };
-
-    const getYouTubeVideoId = (url: string): string | null => {
-        if (!url) return null;
-        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|shorts\/)([^#&?]*).*/;
-        const match = url.match(regExp);
-        if (match && match[2].length === 11) {
-            return match[2];
-        }
-        return null;
-    };
-
-    const getYouTubeThumbnail = (url: string): string | null => {
-        const videoId = getYouTubeVideoId(url);
-        if (videoId) {
-            // Use maxresdefault for best quality, fallback to hqdefault if needed
-            return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
-        }
-        return null;
-    };
+    const allFilters = [...PRIMARY_FILTERS, ...MUSCLE_FILTERS];
 
     return (
         <MainLayout>
-            <div className="exercise-library-page">
-                <div className="page-header">
-                    <h1>Exercise Library</h1>
-                    <div className="page-header-actions">
-                        <button className="btn-add-exercise" onClick={() => handleOpenModal()}>
-                            <Plus size={20} />
-                            Add Exercise
-                        </button>
-                        <button className="btn-bulk-import" onClick={() => setIsBulkImportOpen(true)}>
-                            <Sparkles size={18} />
+            <div className="el-page">
+                {/* Header */}
+                <div className="el-header">
+                    <div>
+                        <h1>Bibliothèque d'exercices</h1>
+                        <p>{exercises.length} exercice{exercises.length !== 1 ? 's' : ''} disponible{exercises.length !== 1 ? 's' : ''}</p>
+                    </div>
+                    <div className="el-header-actions">
+                        <button className="el-btn-secondary" onClick={() => setIsBulkImportOpen(true)}>
+                            <Sparkles size={16} />
                             Bulk AI Import
-                            <span className="btn-bulk-badge">NEW</span>
+                            <span className="el-btn-badge">NEW</span>
+                        </button>
+                        <button className="el-btn-primary" onClick={() => handleOpenModal()}>
+                            <Plus size={16} />
+                            Ajouter
                         </button>
                     </div>
                 </div>
 
-                {/* Search and Filters */}
-                <div className="filters-section">
-                    <div className="search-box">
-                        <Search size={20} />
+                {/* Search */}
+                <div className="el-toolbar">
+                    <div className="el-search">
+                        <Search size={17} className="el-search-icon" />
                         <input
                             type="text"
-                            placeholder="Search exercises..."
+                            placeholder="Rechercher un exercice…"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
                     </div>
-
-                    <div className="category-filters">
-                        {/* First row: General categories */}
-                        <div className="category-row">
-                            {['All', 'Upper Body', 'Lower Body', 'Legs'].map(category => (
-                                <button
-                                    key={category}
-                                    className={`category-btn ${selectedCategory === category ? 'active' : ''}`}
-                                    onClick={() => setSelectedCategory(category)}
-                                >
-                                    {category}
-                                </button>
-                            ))}
-                        </div>
-
-                        {/* Second row: Specific muscle groups */}
-                        <div className="category-row">
-                            {['Pectoraux', 'Épaules', 'Dos', 'Core', 'Cardio', 'Flexibility', 'Other'].map(category => (
-                                <button
-                                    key={category}
-                                    className={`category-btn ${selectedCategory === category ? 'active' : ''}`}
-                                    onClick={() => setSelectedCategory(category)}
-                                >
-                                    {category}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
                 </div>
 
-                {/* Exercise Grid */}
+                {/* Category filters */}
+                <div className="el-filters">
+                    {allFilters.map(cat => (
+                        <button
+                            key={cat}
+                            className={`el-filter-pill ${selectedCategory === cat ? 'active' : ''}`}
+                            onClick={() => setSelectedCategory(cat)}
+                        >
+                            {cat}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Content */}
                 {isLoading ? (
-                    <div className="loading">Loading exercises...</div>
+                    <div className="el-loading">
+                        <div className="el-spinner" />
+                        <p>Chargement…</p>
+                    </div>
                 ) : error ? (
-                    <div className="error">{error}</div>
+                    <div className="el-empty"><p>{error}</p></div>
                 ) : filteredExercises.length === 0 ? (
-                    <div className="empty-state">
-                        <p>No exercises found</p>
-                        <button className="btn-add-exercise" onClick={() => handleOpenModal()}>
-                            <Plus size={20} />
-                            Add Your First Exercise
+                    <div className="el-empty">
+                        <p>Aucun exercice trouvé.</p>
+                        <button className="el-btn-primary" onClick={() => handleOpenModal()}>
+                            <Plus size={16} /> Ajouter un exercice
                         </button>
                     </div>
                 ) : (
-                    <div className="exercise-grid">
-                        {filteredExercises.map(exercise => (
-                            <div
-                                key={exercise.exerciseTemplateId}
-                                className="exercise-card"
-                            >
-                                <div className="exercise-thumbnail">
-                                    {(() => {
-                                        if (!exercise.videoUrl) {
-                                            return (
-                                                <div className="no-video-placeholder">
-                                                    <span>No Video</span>
+                    <>
+                        <div className="el-grid">
+                            {pagedExercises.map(exercise => {
+                                const isPlaying = playingExerciseId === exercise.exerciseTemplateId;
+                                const catColor = CATEGORY_COLORS[exercise.category] ?? CATEGORY_COLORS['Other'];
+                                const ytThumbnail = exercise.videoUrl ? getYouTubeThumbnail(exercise.videoUrl) : null;
+                                const ytEmbed = exercise.videoUrl ? getYouTubeEmbedUrl(exercise.videoUrl) : null;
+
+                                return (
+                                    <div
+                                        key={exercise.exerciseTemplateId}
+                                        className="el-card"
+                                        onClick={() => handleViewExercise(exercise)}
+                                    >
+                                        {/* Thumbnail */}
+                                        <div className="el-card-thumb">
+                                            {!exercise.videoUrl ? (
+                                                <div className="el-thumb-placeholder">
+                                                    <span>{exercise.name.charAt(0).toUpperCase()}</span>
                                                 </div>
-                                            );
-                                        }
-
-                                        // Check if this exercise is currently playing
-                                        const isPlaying = playingExerciseId === exercise.exerciseTemplateId;
-
-                                        if (isPlaying) {
-                                            // Show inline video player
-                                            const youtubeEmbedUrl = getYouTubeEmbedUrl(exercise.videoUrl);
-
-                                            if (youtubeEmbedUrl) {
-                                                return (
+                                            ) : isPlaying ? (
+                                                ytEmbed ? (
                                                     <iframe
-                                                        src={`${youtubeEmbedUrl}?autoplay=1`}
+                                                        src={`${ytEmbed}?autoplay=1`}
                                                         title={exercise.name}
                                                         frameBorder="0"
                                                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                                         allowFullScreen
-                                                        className="youtube-embed"
+                                                        className="el-yt-embed"
                                                     />
-                                                );
-                                            } else {
-                                                return (
+                                                ) : (
                                                     <video
                                                         src={`${import.meta.env.VITE_API_URL}${exercise.videoUrl}`}
-                                                        controls
-                                                        autoPlay
+                                                        controls autoPlay
                                                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                                     />
-                                                );
-                                            }
-                                        }
-
-
-                                        // Show custom thumbnail
-                                        const youtubeThumbnail = getYouTubeThumbnail(exercise.videoUrl);
-                                        return (
-                                            <div
-                                                className="video-thumbnail-custom"
-                                                style={{ cursor: 'pointer', backgroundImage: youtubeThumbnail ? `url(${youtubeThumbnail})` : undefined, backgroundSize: 'cover', backgroundPosition: 'center' }}
-                                            >
-                                                <div className="thumbnail-letter">
-                                                    {exercise.name.charAt(0).toUpperCase()}
-                                                </div>
+                                                )
+                                            ) : (
                                                 <div
-                                                    className="play-overlay"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setPlayingExerciseId(exercise.exerciseTemplateId);
-                                                    }}
+                                                    className="el-thumb-video"
+                                                    style={ytThumbnail ? { backgroundImage: `url(${ytThumbnail})` } : undefined}
                                                 >
-                                                    <div className="play-icon">▶</div>
+                                                    {!ytThumbnail && (
+                                                        <span className="el-thumb-letter">{exercise.name.charAt(0).toUpperCase()}</span>
+                                                    )}
+                                                    <div
+                                                        className="el-play-overlay"
+                                                        onClick={(e) => { e.stopPropagation(); setPlayingExerciseId(exercise.exerciseTemplateId); }}
+                                                    >
+                                                        <div className="el-play-icon">▶</div>
+                                                    </div>
                                                 </div>
+                                            )}
+                                        </div>
+
+                                        {/* Edit button */}
+                                        <button
+                                            className="el-card-edit"
+                                            onClick={(e) => { e.stopPropagation(); handleOpenModal(exercise); }}
+                                            title="Modifier"
+                                        >
+                                            <Pencil size={14} />
+                                        </button>
+
+                                        {/* Info */}
+                                        <div className="el-card-info">
+                                            <h3 className="el-card-name">{exercise.name}</h3>
+                                            <div className="el-card-meta">
+                                                <span
+                                                    className="el-cat-badge"
+                                                    style={{ background: catColor.bg, color: catColor.fg }}
+                                                >
+                                                    {exercise.category}
+                                                </span>
+                                                {exercise.duration && exercise.duration > 0 && (
+                                                    <span className="el-duration">
+                                                        <Clock size={12} />
+                                                        {formatDuration(exercise.duration)}
+                                                    </span>
+                                                )}
                                             </div>
-                                        );
-                                    })()}
-                                </div>
-
-                                {/* Edit Button */}
-                                <button
-                                    className="edit-exercise-btn"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleOpenModal(exercise);
-                                    }}
-                                    title="Modifier l'exercice"
-                                >
-                                    <Pencil size={16} />
-                                </button>
-
-                                <div className="exercise-info">
-                                    <h3>{exercise.name}</h3>
-                                    <div className="exercise-meta">
-                                        <span className={`category-badge ${getCategoryBadgeClass(exercise.category)}`}>
-                                            {exercise.category.replace(/([A-Z])/g, ' $1').trim()}
-                                        </span>
-                                        {exercise.duration && exercise.duration > 0 && (
-                                            <span className="duration">{formatDuration(exercise.duration)}</span>
-                                        )}
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {filteredExercises.length > pageSize && (
+                            <Pagination
+                                page={page}
+                                pageCount={pageCount}
+                                pageSize={pageSize}
+                                totalItems={filteredExercises.length}
+                                onPageChange={setPage}
+                                onPageSizeChange={(s) => { setPageSize(s); setPage(1); }}
+                                pageSizeOptions={[12, 24, 48]}
+                            />
+                        )}
+                    </>
                 )}
             </div>
 
-            {/* Exercise Template Modal */}
             <ExerciseTemplateModal
                 isOpen={isModalOpen}
                 onClose={handleCloseModal}
@@ -349,21 +310,18 @@ const ExerciseLibraryPage: React.FC = () => {
                 exercise={selectedExercise}
             />
 
-            {/* Exercise Viewer Modal */}
             <ExerciseViewerModal
                 isOpen={isViewerOpen}
-                onClose={handleCloseViewer}
+                onClose={() => { setIsViewerOpen(false); setViewedExercise(null); }}
                 exercise={viewedExercise}
             />
 
-            {/* Bulk AI Import Modal */}
             <BulkAIImportModal
                 isOpen={isBulkImportOpen}
                 onClose={() => setIsBulkImportOpen(false)}
                 onImportComplete={() => { setIsBulkImportOpen(false); loadExercises(); }}
             />
 
-            {/* Chat Popup */}
             <ChatPopup />
         </MainLayout>
     );

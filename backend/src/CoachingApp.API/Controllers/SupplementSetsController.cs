@@ -61,29 +61,6 @@ public class SupplementSetsController : ControllerBase
         }
     }
 
-    [HttpPut("{id}/items")]
-    public async Task<ActionResult<SupplementSetResponse>> UpdateItems(
-        int id,
-        [FromBody] UpdateSupplementSetItemsRequest request)
-    {
-        try
-        {
-            var coachId = GetCoachId();
-            var set = await _service.UpdateItemsAsync(coachId, id, request.Items ?? new List<SupplementSetItemDto>());
-            if (set == null) return NotFound();
-            return Ok(set);
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating supplement set items {Id}", id);
-            return StatusCode(500, new { message = "Erreur interne" });
-        }
-    }
-
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
@@ -97,6 +74,89 @@ public class SupplementSetsController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting supplement set {Id}", id);
+            return StatusCode(500, new { message = "Erreur interne" });
+        }
+    }
+
+    [HttpPost("{setId}/groups")]
+    public async Task<ActionResult<SupplementSetResponse>> AddGroup(int setId, [FromBody] AddGroupRequest request)
+    {
+        try
+        {
+            var coachId = GetCoachId();
+            var set = await _service.AddGroupAsync(coachId, setId, request.Name);
+            if (set == null) return NotFound();
+            return Ok(set);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error adding group to supplement set {SetId}", setId);
+            return StatusCode(500, new { message = "Erreur interne" });
+        }
+    }
+
+    [HttpPut("{setId}/groups/{groupId}")]
+    public async Task<ActionResult<SupplementSetResponse>> RenameGroup(int setId, int groupId, [FromBody] RenameGroupRequest request)
+    {
+        try
+        {
+            var coachId = GetCoachId();
+            var set = await _service.RenameGroupAsync(coachId, setId, groupId, request.Name);
+            if (set == null) return NotFound();
+            return Ok(set);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error renaming group {GroupId}", groupId);
+            return StatusCode(500, new { message = "Erreur interne" });
+        }
+    }
+
+    [HttpDelete("{setId}/groups/{groupId}")]
+    public async Task<IActionResult> DeleteGroup(int setId, int groupId)
+    {
+        try
+        {
+            var coachId = GetCoachId();
+            var ok = await _service.DeleteGroupAsync(coachId, setId, groupId);
+            if (!ok) return NotFound();
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting group {GroupId}", groupId);
+            return StatusCode(500, new { message = "Erreur interne" });
+        }
+    }
+
+    [HttpPut("{setId}/groups/{groupId}/items")]
+    public async Task<ActionResult<SupplementSetResponse>> UpdateGroupItems(
+        int setId,
+        int groupId,
+        [FromBody] UpdateGroupItemsRequest request)
+    {
+        try
+        {
+            var coachId = GetCoachId();
+            var set = await _service.UpdateGroupItemsAsync(coachId, setId, groupId, request.Items ?? new List<SupplementSetItemDto>());
+            if (set == null) return NotFound();
+            return Ok(set);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating items for group {GroupId}", groupId);
             return StatusCode(500, new { message = "Erreur interne" });
         }
     }

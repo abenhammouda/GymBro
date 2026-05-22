@@ -138,11 +138,17 @@ public class CoachClientsController : ControllerBase
                     Age = cc.Adherent.DateOfBirth.HasValue
                         ? DateTime.UtcNow.Year - cc.Adherent.DateOfBirth.Value.Year
                         : null,
+                    Gender = cc.Adherent.Gender,
+                    Height = cc.Adherent.Height,
                     Status = cc.Status.ToString(),
                     StartDate = cc.StartDate,
                     EndDate = cc.EndDate,
                     GoalSummary = cc.GoalSummary,
-                    LastWeight = cc.Adherent.InitialWeight
+                    LastWeight = cc.Adherent.InitialWeight,
+                    NutritionGoal = cc.Adherent.NutritionGoal.HasValue
+                        ? cc.Adherent.NutritionGoal.Value.ToString()
+                        : null,
+                    CaloriesDelta = cc.Adherent.CaloriesDelta
                 })
                 .ToListAsync();
 

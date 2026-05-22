@@ -16,6 +16,8 @@ public class Adherent
     public decimal? InitialWeight { get; set; }          // poids lors de la souscription (kg)
     public WorkNature? WorkNature { get; set; }          // nature du travail
     public GoalType? GoalType { get; set; }              // objectif fitness
+    public NutritionGoal? NutritionGoal { get; set; }    // déficit / maintien / surplus
+    public int? CaloriesDelta { get; set; }              // écart kcal vs maintien (négatif=déficit, positif=surplus)
     public bool IsEmailVerified { get; set; } = false;
     public string? VerificationCode { get; set; }
     public DateTime? VerificationCodeExpiry { get; set; }

@@ -81,12 +81,16 @@ public class ClientSummaryDto
     public string? AdherentEmail { get; set; }
     public string? ProfilePicture { get; set; }
     public int? Age { get; set; }
+    public string? Gender { get; set; }
+    public decimal? Height { get; set; }
     public string Status { get; set; } = string.Empty;
     public DateTime StartDate { get; set; }
     public DateTime? EndDate { get; set; }
     public string? GoalSummary { get; set; }
     public decimal? LastWeight { get; set; }
     public DateTime? LastActivityDate { get; set; }
+    public string? NutritionGoal { get; set; }    // "Deficit" | "Maintenance" | "Surplus"
+    public int? CaloriesDelta { get; set; }
 }
 
 public class ClientProfileDto

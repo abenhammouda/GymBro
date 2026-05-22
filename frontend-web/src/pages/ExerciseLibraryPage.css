@@ -1,426 +1,370 @@
-.exercise-library-page {
-    padding: 2rem;
-    max-width: 1400px;
+/* ============================
+   Exercise Library Page — aligned with MealsPage / SupplementsPage
+   ============================ */
+
+.el-page {
+    padding: 1.5rem 2rem 3rem;
+    max-width: 1280px;
     margin: 0 auto;
-    min-height: 100vh;
 }
 
-.page-header {
+/* ─── Header ─── */
+.el-header {
     display: flex;
+    align-items: flex-start;
     justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
 }
 
-.page-header h1 {
-    font-size: 2rem;
-    font-weight: 600;
-    color: #1a1a1a;
+.el-header h1 {
     margin: 0;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #111827;
+    letter-spacing: -0.02em;
 }
 
-.btn-add-exercise {
+.el-header p {
+    margin: 0.25rem 0 0;
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+.el-header-actions {
     display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-shrink: 0;
+}
+
+/* ─── Buttons ─── */
+.el-btn-primary {
+    display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.75rem 1.5rem;
-    background: #1e88e5;
+    padding: 0.6rem 1.1rem;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
     color: white;
     border: none;
-    border-radius: 4px;
-    font-size: 1rem;
-    font-weight: 500;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
     cursor: pointer;
-    transition: background 0.2s;
+    white-space: nowrap;
+    transition: all 0.15s;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
 }
 
-.btn-add-exercise:hover {
-    background: #1976d2;
+.el-btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
 }
 
-.page-header-actions {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.btn-bulk-import {
-    display: flex;
+.el-btn-secondary {
+    display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.75rem 1.5rem;
+    padding: 0.6rem 1.1rem;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border: none;
-    border-radius: 4px;
-    font-size: 1rem;
-    font-weight: 500;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
-    position: relative;
+    white-space: nowrap;
+    transition: all 0.15s;
+    box-shadow: 0 2px 8px rgba(118, 75, 162, 0.3);
 }
 
-.btn-bulk-import:hover {
-    background: linear-gradient(135deg, #5a67d8 0%, #6b3f9e 100%);
+.el-btn-secondary:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 4px 14px rgba(118, 75, 162, 0.4);
 }
 
-.btn-bulk-badge {
-    background: #fbbf24;
-    color: #1a1a1a;
-    font-size: 0.65rem;
-    font-weight: 700;
+.el-btn-badge {
+    display: inline-flex;
+    align-items: center;
     padding: 0.15rem 0.45rem;
-    border-radius: 20px;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
+    background: #fbbf24;
+    color: #78350f;
+    border-radius: 999px;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
 }
 
-/* Filters Section */
-.filters-section {
-    margin-bottom: 2rem;
-}
-
-.search-box {
+/* ─── Toolbar ─── */
+.el-toolbar {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    padding: 0.75rem 1rem;
+    margin-bottom: 0.85rem;
+}
+
+.el-search {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     background: white;
-    border: 2px solid #e5e7eb;
-    border-radius: 12px;
-    margin-bottom: 1rem;
-    transition: border-color 0.2s;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 0.55rem 0.85rem;
+    width: 100%;
+    max-width: 480px;
+    transition: border-color 0.15s, box-shadow 0.15s;
 }
 
-.search-box:focus-within {
-    border-color: #1e88e5;
+.el-search:focus-within {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
-.search-box svg {
-    color: #9ca3af;
-}
+.el-search-icon { color: #9ca3af; flex-shrink: 0; }
 
-.search-box input {
-    flex: 1;
+.el-search input {
     border: none;
     outline: none;
-    font-size: 1rem;
-    color: #1a1a1a;
+    flex: 1;
+    font-size: 0.9rem;
+    color: #111827;
+    background: transparent;
 }
 
-.search-box input::placeholder {
+.el-search input::placeholder { color: #9ca3af; }
+
+/* ─── Filter pills ─── */
+.el-filters {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+}
+
+.el-filter-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.42rem 0.9rem;
+    background: white;
+    color: #374151;
+    border: 1px solid #e5e7eb;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.el-filter-pill:hover { background: #f9fafb; border-color: #d1d5db; }
+
+.el-filter-pill.active {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    border-color: transparent;
+    color: white;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+}
+
+/* ─── Loading / Empty ─── */
+.el-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 4rem 0;
+    color: #6b7280;
+}
+
+.el-spinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid #e5e7eb;
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    animation: el-spin 0.8s linear infinite;
+}
+
+@keyframes el-spin { to { transform: rotate(360deg); } }
+
+.el-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 4rem 1rem;
+    color: #6b7280;
+    border: 1px dashed #e5e7eb;
+    border-radius: 12px;
+    background: white;
+    text-align: center;
+}
+
+/* ─── Grid ─── */
+.el-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+/* ─── Card ─── */
+.el-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: box-shadow 0.15s, border-color 0.15s, transform 0.15s;
+}
+
+.el-card:hover {
+    border-color: #c7d2fe;
+    box-shadow: 0 4px 16px rgba(37, 99, 235, 0.1);
+    transform: translateY(-1px);
+}
+
+/* Thumbnail */
+.el-card-thumb {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background: #f3f4f6;
+}
+
+.el-thumb-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+    font-size: 2.5rem;
+    font-weight: 700;
     color: #9ca3af;
 }
 
-.category-filters {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-.category-row {
-    display: flex;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-}
-
-.category-btn {
-    padding: 0.5rem 1.25rem;
-    background: white;
-    border: 2px solid #e5e7eb;
-    border-radius: 4px;
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: #6b7280;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.category-btn:hover {
-    border-color: #1e88e5;
-    color: #1e88e5;
-}
-
-.category-btn.active {
-    background: #1e88e5;
-    border-color: #1e88e5;
-    color: white;
-}
-
-/* Exercise Grid */
-.exercise-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 1.5rem;
-}
-
-.exercise-card {
+.el-thumb-video {
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    background-color: #1f2937;
     position: relative;
-    background: white;
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.exercise-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-}
-
-/* Edit Button */
-.edit-exercise-btn {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    width: 36px;
-    height: 36px;
-    background: rgba(255, 255, 255, 0.95);
-    border: none;
-    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
-    opacity: 0;
-    transform: scale(0.9);
-    transition: all 0.2s;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    z-index: 10;
-    color: #1e40af;
 }
 
-.edit-exercise-btn:hover {
-    background: #1e40af;
-    color: white;
-    transform: scale(1);
-}
-
-.exercise-card:hover .edit-exercise-btn {
-    opacity: 1;
-    transform: scale(1);
-}
-
-.exercise-thumbnail {
-    position: relative;
-    width: 100%;
-    height: 180px;
-    background: linear-gradient(135deg, #1e88e5 0%, #1976d2 100%);
-    overflow: hidden;
-}
-
-.exercise-thumbnail video {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.youtube-embed {
-    width: 100%;
-    height: 100%;
-    border: none;
-}
-
-.video-thumbnail-custom {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(135deg, #1e88e5 0%, #1976d2 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-}
-
-.thumbnail-letter {
-    font-size: 5rem;
+.el-thumb-letter {
+    font-size: 2.5rem;
     font-weight: 700;
-    color: rgba(255, 255, 255, 0.3);
-    user-select: none;
-    pointer-events: none;
+    color: rgba(255, 255, 255, 0.6);
     position: absolute;
-    z-index: 1;
 }
 
-.no-video-placeholder {
-    width: 100%;
-    height: 100%;
+.el-play-overlay {
+    position: absolute;
+    inset: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
-    font-weight: 500;
+    background: rgba(0, 0, 0, 0.25);
+    transition: background 0.15s;
 }
 
-.play-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.4);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 1;
-    transition: all 0.3s ease;
-    cursor: pointer;
-    z-index: 5;
-}
+.el-play-overlay:hover { background: rgba(0, 0, 0, 0.45); }
 
-/* Hide play overlay when there's a YouTube embed */
-.exercise-thumbnail:has(.youtube-embed) .play-overlay {
-    display: none;
-}
-
-.exercise-card:hover .play-overlay {
-    background: rgba(0, 0, 0, 0.5);
-}
-
-.play-icon {
-    width: 60px;
-    height: 60px;
-    background: rgba(255, 255, 255, 0.95);
+.el-play-icon {
+    width: 44px;
+    height: 44px;
+    background: rgba(255, 255, 255, 0.9);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.5rem;
-    color: #1e88e5;
-    transition: all 0.3s ease;
-    padding-left: 4px;
-}
-
-.exercise-card:hover .play-icon {
-    transform: scale(1.1);
-    background: white;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-.exercise-info {
-    padding: 1rem;
-}
-
-.exercise-info h3 {
     font-size: 1.1rem;
-    font-weight: 600;
-    color: #1a1a1a;
-    margin: 0 0 0.75rem 0;
+    color: #111827;
+    padding-left: 3px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+    transition: transform 0.15s;
 }
 
-.exercise-meta {
+.el-play-overlay:hover .el-play-icon { transform: scale(1.1); }
+
+.el-yt-embed { width: 100%; height: 100%; border: none; }
+
+/* Edit button */
+.el-card-edit {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    background: rgba(255, 255, 255, 0.92);
+    color: #374151;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+    z-index: 1;
+}
+
+.el-card-edit:hover {
+    background: white;
+    color: #2563eb;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Card info */
+.el-card-info {
+    padding: 0.75rem 0.9rem 0.9rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.el-card-name {
+    margin: 0;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #111827;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.el-card-meta {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.5rem;
     flex-wrap: wrap;
 }
 
-.category-badge {
-    padding: 0.25rem 0.75rem;
-    border-radius: 12px;
-    font-size: 0.75rem;
-    font-weight: 500;
-    text-transform: capitalize;
-}
-
-/* Muscle group specific badges */
-.category-badge.pectoraux {
-    background: #dbeafe;
-    color: #1e40af;
-}
-
-.category-badge.epaules {
-    background: #fef3c7;
-    color: #92400e;
-}
-
-.category-badge.dos {
-    background: #fef2f2;
-    color: #991b1b;
-}
-
-.category-badge.jambes {
-    background: #fce7f3;
-    color: #9f1239;
-}
-
-.category-badge.core {
-    background: #e0e7ff;
-    color: #4338ca;
-}
-
-.category-badge.cardio {
-    background: #dcfce7;
-    color: #166534;
-}
-
-.category-badge.flexibility {
-    background: #f3e8ff;
-    color: #6b21a8;
-}
-
-.category-badge.other {
-    background: #f3f4f6;
-    color: #4b5563;
-}
-
-.duration {
-    font-size: 0.85rem;
-    color: #6b7280;
-}
-
-/* Loading and Error States */
-.loading,
-.error,
-.empty-state {
-    text-align: center;
-    padding: 4rem 2rem;
-    color: #6b7280;
-}
-
-.error {
-    color: #dc2626;
-}
-
-.empty-state {
-    display: flex;
-    flex-direction: column;
+.el-cat-badge {
+    display: inline-flex;
     align-items: center;
-    gap: 1.5rem;
+    padding: 0.22rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
 }
 
-.empty-state p {
-    font-size: 1.1rem;
+.el-duration {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
     color: #6b7280;
-    margin: 0;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-    .exercise-library-page {
-        padding: 1rem;
-    }
-
-    .page-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 1rem;
-    }
-
-    .exercise-grid {
-        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-        gap: 1rem;
-    }
-
-    .category-filters {
-        overflow-x: auto;
-        flex-wrap: nowrap;
-        padding-bottom: 0.5rem;
-    }
-
-    .category-btn {
-        white-space: nowrap;
-    }
+    font-size: 0.78rem;
+    font-weight: 500;
 }

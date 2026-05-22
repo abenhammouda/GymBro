@@ -74,7 +74,15 @@ public class CoachingDbContext : DbContext
 
     // Supplement Sets (compléments organisés par timing)
     public DbSet<SupplementSet> SupplementSets { get; set; }
+    public DbSet<SupplementGroup> SupplementGroups { get; set; }
     public DbSet<SupplementSetItem> SupplementSetItems { get; set; }
+
+    // Meal overrides / exceptions (free meal, replacement, skip)
+    public DbSet<MealOverride> MealOverrides { get; set; }
+
+    // Nutrition reference + AI alias cache
+    public DbSet<NutritionFood> NutritionFoods { get; set; }
+    public DbSet<FoodAliasCache> FoodAliasCaches { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -250,6 +258,23 @@ public class CoachingDbContext : DbContext
             .Property(sm => sm.Status)
             .HasMaxLength(50);
 
+        // Configure MealOverride relationships
+        modelBuilder.Entity<MealOverride>()
+            .HasOne(mo => mo.ScheduledMeal)
+            .WithOne(sm => sm.Override)
+            .HasForeignKey<MealOverride>(mo => mo.ScheduledMealId)
+            .OnDelete(DeleteBehavior.ClientCascade);
+
+        modelBuilder.Entity<MealOverride>()
+            .HasOne(mo => mo.ReplacementMeal)
+            .WithMany()
+            .HasForeignKey(mo => mo.ReplacementMealId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<MealOverride>()
+            .Property(mo => mo.ActionType)
+            .HasMaxLength(50);
+
         // Configure MealTab primary key
         modelBuilder.Entity<MealTab>().HasKey(mt => mt.MealTabId);
 
@@ -279,6 +304,43 @@ public class CoachingDbContext : DbContext
             .Property(mi => mi.QuantityGrams)
             .HasPrecision(8, 2);
 
+        // Macros precision (nullable decimals)
+        modelBuilder.Entity<MealIngredient>().Property(mi => mi.Calories).HasPrecision(8, 2);
+        modelBuilder.Entity<MealIngredient>().Property(mi => mi.Proteins).HasPrecision(8, 2);
+        modelBuilder.Entity<MealIngredient>().Property(mi => mi.Carbs).HasPrecision(8, 2);
+        modelBuilder.Entity<MealIngredient>().Property(mi => mi.Fats).HasPrecision(8, 2);
+
+        // Link ingredient -> NutritionFood (optional). SetNull keeps ingredient if food reference is removed.
+        modelBuilder.Entity<MealIngredient>()
+            .HasOne(mi => mi.NutritionFood)
+            .WithMany()
+            .HasForeignKey(mi => mi.NutritionFoodId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // NutritionFood
+        modelBuilder.Entity<NutritionFood>().HasKey(nf => nf.NutritionFoodId);
+        modelBuilder.Entity<NutritionFood>().Property(nf => nf.CanonicalName)
+            .IsRequired().HasMaxLength(200);
+        modelBuilder.Entity<NutritionFood>().Property(nf => nf.CanonicalNameFr).HasMaxLength(200);
+        modelBuilder.Entity<NutritionFood>().Property(nf => nf.Source).HasMaxLength(32);
+        modelBuilder.Entity<NutritionFood>().Property(nf => nf.CaloriesPer100g).HasPrecision(8, 2);
+        modelBuilder.Entity<NutritionFood>().Property(nf => nf.ProteinsPer100g).HasPrecision(8, 2);
+        modelBuilder.Entity<NutritionFood>().Property(nf => nf.CarbsPer100g).HasPrecision(8, 2);
+        modelBuilder.Entity<NutritionFood>().Property(nf => nf.FatsPer100g).HasPrecision(8, 2);
+        modelBuilder.Entity<NutritionFood>().HasIndex(nf => nf.CanonicalName);
+        modelBuilder.Entity<NutritionFood>().HasIndex(nf => nf.CanonicalNameFr);
+
+        // FoodAliasCache
+        modelBuilder.Entity<FoodAliasCache>().HasKey(fac => fac.FoodAliasCacheId);
+        modelBuilder.Entity<FoodAliasCache>().Property(fac => fac.NormalizedInput)
+            .IsRequired().HasMaxLength(200);
+        modelBuilder.Entity<FoodAliasCache>().HasIndex(fac => fac.NormalizedInput).IsUnique();
+        modelBuilder.Entity<FoodAliasCache>()
+            .HasOne(fac => fac.NutritionFood)
+            .WithMany()
+            .HasForeignKey(fac => fac.NutritionFoodId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         // Configure SupplementSet primary key & relationships
         modelBuilder.Entity<SupplementSet>().HasKey(ss => ss.SupplementSetId);
 
@@ -292,13 +354,27 @@ public class CoachingDbContext : DbContext
             .HasIndex(ss => new { ss.CoachId, ss.Timing, ss.Index })
             .IsUnique();
 
+        // Configure SupplementGroup primary key & relationships
+        modelBuilder.Entity<SupplementGroup>().HasKey(sg => sg.SupplementGroupId);
+
+        modelBuilder.Entity<SupplementGroup>()
+            .HasOne(sg => sg.Set)
+            .WithMany(ss => ss.Groups)
+            .HasForeignKey(sg => sg.SupplementSetId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<SupplementGroup>()
+            .Property(sg => sg.Name)
+            .IsRequired()
+            .HasMaxLength(120);
+
         // Configure SupplementSetItem primary key & relationships
         modelBuilder.Entity<SupplementSetItem>().HasKey(ssi => ssi.SupplementSetItemId);
 
         modelBuilder.Entity<SupplementSetItem>()
-            .HasOne(ssi => ssi.Set)
-            .WithMany(ss => ss.Items)
-            .HasForeignKey(ssi => ssi.SupplementSetId)
+            .HasOne(ssi => ssi.Group)
+            .WithMany(sg => sg.Items)
+            .HasForeignKey(ssi => ssi.SupplementGroupId)
             .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<SupplementSetItem>()

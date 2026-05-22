@@ -27,7 +27,8 @@ public class SupplementSetService
         await EnsureDefaultsAsync(coachId);
 
         var sets = await _context.SupplementSets
-            .Include(s => s.Items)
+            .Include(s => s.Groups)
+                .ThenInclude(g => g.Items)
             .Where(s => s.CoachId == coachId)
             .OrderBy(s => s.OrderIndex)
             .ToListAsync();
@@ -66,20 +67,101 @@ public class SupplementSetService
         return MapToResponse(set);
     }
 
-    public async Task<SupplementSetResponse?> UpdateItemsAsync(int coachId, int setId, List<SupplementSetItemDto> items)
+    public async Task<bool> DeleteAsync(int coachId, int setId)
     {
         var set = await _context.SupplementSets
-            .Include(s => s.Items)
+            .FirstOrDefaultAsync(s => s.SupplementSetId == setId && s.CoachId == coachId);
+
+        if (set == null) return false;
+
+        _context.SupplementSets.Remove(set);
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<SupplementSetResponse?> AddGroupAsync(int coachId, int setId, string name)
+    {
+        var set = await _context.SupplementSets
+            .Include(s => s.Groups)
+                .ThenInclude(g => g.Items)
             .FirstOrDefaultAsync(s => s.SupplementSetId == setId && s.CoachId == coachId);
 
         if (set == null) return null;
 
+        var trimmedName = (name ?? string.Empty).Trim();
+        if (string.IsNullOrEmpty(trimmedName))
+            throw new ArgumentException("Le nom du groupe est requis");
+
+        var maxOrder = set.Groups.Any() ? set.Groups.Max(g => g.OrderIndex) : -1;
+
+        set.Groups.Add(new SupplementGroup
+        {
+            Name = trimmedName,
+            OrderIndex = maxOrder + 1
+        });
+        set.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+        return MapToResponse(set);
+    }
+
+    public async Task<SupplementSetResponse?> RenameGroupAsync(int coachId, int setId, int groupId, string name)
+    {
+        var set = await _context.SupplementSets
+            .Include(s => s.Groups)
+                .ThenInclude(g => g.Items)
+            .FirstOrDefaultAsync(s => s.SupplementSetId == setId && s.CoachId == coachId);
+
+        if (set == null) return null;
+
+        var group = set.Groups.FirstOrDefault(g => g.SupplementGroupId == groupId);
+        if (group == null) return null;
+
+        var trimmedName = (name ?? string.Empty).Trim();
+        if (string.IsNullOrEmpty(trimmedName))
+            throw new ArgumentException("Le nom du groupe est requis");
+
+        group.Name = trimmedName;
+        set.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+        return MapToResponse(set);
+    }
+
+    public async Task<bool> DeleteGroupAsync(int coachId, int setId, int groupId)
+    {
+        var set = await _context.SupplementSets
+            .Include(s => s.Groups)
+            .FirstOrDefaultAsync(s => s.SupplementSetId == setId && s.CoachId == coachId);
+
+        if (set == null) return false;
+
+        var group = set.Groups.FirstOrDefault(g => g.SupplementGroupId == groupId);
+        if (group == null) return false;
+
+        _context.SupplementGroups.Remove(group);
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<SupplementSetResponse?> UpdateGroupItemsAsync(int coachId, int setId, int groupId, List<SupplementSetItemDto> items)
+    {
+        var set = await _context.SupplementSets
+            .Include(s => s.Groups)
+                .ThenInclude(g => g.Items)
+            .FirstOrDefaultAsync(s => s.SupplementSetId == setId && s.CoachId == coachId);
+
+        if (set == null) return null;
+
+        var group = set.Groups.FirstOrDefault(g => g.SupplementGroupId == groupId);
+        if (group == null) return null;
+
         ValidateItems(items);
 
-        set.Items.Clear();
+        group.Items.Clear();
         foreach (var dto in items.OrderBy(i => i.OrderIndex))
         {
-            set.Items.Add(new SupplementSetItem
+            group.Items.Add(new SupplementSetItem
             {
                 Name = dto.Name.Trim(),
                 Quantity = dto.Quantity,
@@ -90,21 +172,7 @@ public class SupplementSetService
         set.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
-
         return MapToResponse(set);
-    }
-
-    public async Task<bool> DeleteAsync(int coachId, int setId)
-    {
-        var set = await _context.SupplementSets
-            .Include(s => s.Items)
-            .FirstOrDefaultAsync(s => s.SupplementSetId == setId && s.CoachId == coachId);
-
-        if (set == null) return false;
-
-        _context.SupplementSets.Remove(set);
-        await _context.SaveChangesAsync();
-        return true;
     }
 
     private async Task EnsureDefaultsAsync(int coachId)
@@ -155,11 +223,6 @@ public class SupplementSetService
         };
     }
 
-    /// <summary>
-    /// Compute the next set following the strict alternation:
-    /// Pre 1 -> Post 1 -> Pre 2 -> Post 2 -> ...
-    /// regardless of which sets the user previously deleted.
-    /// </summary>
     private static (SupplementTiming Timing, int Index) ComputeNext(
         List<SupplementSet> existing,
         SupplementTiming preTiming,
@@ -210,14 +273,22 @@ public class SupplementSetService
             set.Timing,
             set.Index,
             set.OrderIndex,
-            set.Items
-                .OrderBy(i => i.OrderIndex)
-                .Select(i => new SupplementSetItemDto(
-                    i.SupplementSetItemId,
-                    i.Name,
-                    i.Quantity,
-                    i.Unit,
-                    i.OrderIndex
+            set.Groups
+                .OrderBy(g => g.OrderIndex)
+                .Select(g => new SupplementGroupDto(
+                    g.SupplementGroupId,
+                    g.Name,
+                    g.OrderIndex,
+                    g.Items
+                        .OrderBy(i => i.OrderIndex)
+                        .Select(i => new SupplementSetItemDto(
+                            i.SupplementSetItemId,
+                            i.Name,
+                            i.Quantity,
+                            i.Unit,
+                            i.OrderIndex
+                        ))
+                        .ToList()
                 ))
                 .ToList(),
             set.CreatedAt,

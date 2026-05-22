@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import {
     Plus, X, UtensilsCrossed, Trash2, Search, MoreVertical,
-    Pencil, Copy, Sparkles
+    Pencil, Copy, Sparkles, AlertCircle, Loader2, Calculator
 } from 'lucide-react';
 import MainLayout from '../components/layout/MainLayout';
 import Pagination from '../components/common/Pagination';
@@ -10,6 +10,11 @@ import { mealService } from '../services/meal.service';
 import type { MealTab, Meal, CreateMealRequest, UpdateMealRequest, MealIngredient } from '../types';
 import toast, { Toaster } from 'react-hot-toast';
 import './MealsPage.css';
+
+type PendingCreate = { request: CreateMealRequest; imageFile?: File; targetTabName?: string };
+type AiConfirmContext =
+    | { kind: 'create'; pending: PendingCreate }
+    | { kind: 'existing'; mealId: number; mealName: string };
 
 // ──────────────────────────────────────────────────────────
 // Visual mapping for the leading meal icon. Since we don't store
@@ -54,6 +59,11 @@ const MealsPage = () => {
     // Pagination
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
+
+    // AI macros calculation state
+    const [aiConfirm, setAiConfirm] = useState<AiConfirmContext | null>(null);
+    const [aiProcessing, setAiProcessing] = useState(false);
+    const [failuresMeal, setFailuresMeal] = useState<Meal | null>(null);
 
     // ──────────────────────────────────────────────────────
     // Effects
@@ -212,8 +222,9 @@ const MealsPage = () => {
             orderIndex: i
         }));
 
-        try {
-            if (modalMode === 'edit' && editingMeal) {
+        // Edit path: no AI prompt — keep current behavior
+        if (modalMode === 'edit' && editingMeal) {
+            try {
                 const updateData: UpdateMealRequest = {
                     name: formData.name,
                     description: formData.description || undefined,
@@ -221,26 +232,95 @@ const MealsPage = () => {
                 };
                 await mealService.updateMeal(editingMeal.mealId, updateData);
                 toast.success('Repas modifié');
-            } else {
-                const targetTab = tabs.find(t => t.mealTabId === modalTabId);
-                const createData: CreateMealRequest = {
-                    mealTabId: modalTabId,
-                    name: formData.name,
-                    description: formData.description || undefined,
-                    ingredients: allIngredients,
-                    orderIndex: (mealsByTab[modalTabId]?.length ?? 0)
-                };
-                await mealService.createMeal(createData);
-                toast.success(modalMode === 'duplicate'
-                    ? `Repas dupliqué dans ${targetTab?.name ?? 'la catégorie'}`
-                    : 'Repas créé');
+                await reloadTabMeals(modalTabId);
+                await loadTabs();
+                handleCloseModal();
+            } catch (error) {
+                console.error('Error saving meal:', error);
+                toast.error('Erreur lors de la sauvegarde du repas');
             }
-            await reloadTabMeals(modalTabId);
-            await loadTabs(); // refresh mealCount on tabs
+            return;
+        }
+
+        // Create/duplicate path: open AI confirmation popup
+        const targetTab = tabs.find(t => t.mealTabId === modalTabId);
+        const createData: CreateMealRequest = {
+            mealTabId: modalTabId,
+            name: formData.name,
+            description: formData.description || undefined,
+            ingredients: allIngredients,
+            orderIndex: (mealsByTab[modalTabId]?.length ?? 0)
+        };
+
+        if (allIngredients.length === 0) {
+            // No ingredients → nothing for AI to calculate, just create directly
+            await submitCreate(createData, undefined, targetTab?.name, false);
+            return;
+        }
+
+        setAiConfirm({
+            kind: 'create',
+            pending: { request: createData, targetTabName: targetTab?.name }
+        });
+    };
+
+    const submitCreate = async (
+        request: CreateMealRequest,
+        imageFile: File | undefined,
+        targetTabName: string | undefined,
+        withAI: boolean
+    ) => {
+        try {
+            if (withAI) setAiProcessing(true);
+            await mealService.createMeal({ ...request, calculateMacrosWithAI: withAI }, imageFile);
+            toast.success(modalMode === 'duplicate'
+                ? `Repas dupliqué dans ${targetTabName ?? 'la catégorie'}`
+                : 'Repas créé');
+            await reloadTabMeals(request.mealTabId);
+            await loadTabs();
             handleCloseModal();
         } catch (error) {
             console.error('Error saving meal:', error);
             toast.error('Erreur lors de la sauvegarde du repas');
+        } finally {
+            setAiProcessing(false);
+            setAiConfirm(null);
+        }
+    };
+
+    const triggerAiCalcForExisting = (meal: Meal) => {
+        setAiConfirm({ kind: 'existing', mealId: meal.mealId, mealName: meal.name });
+    };
+
+    const confirmAiCalcForExisting = async () => {
+        if (!aiConfirm || aiConfirm.kind !== 'existing') return;
+        try {
+            setAiProcessing(true);
+            const updated = await mealService.calculateMacros(aiConfirm.mealId);
+            toast.success('Macros calculées');
+            await reloadTabMeals(updated.mealTabId);
+        } catch (error) {
+            console.error('Error calculating macros:', error);
+            toast.error('Erreur lors du calcul des macros');
+        } finally {
+            setAiProcessing(false);
+            setAiConfirm(null);
+        }
+    };
+
+    const saveIngredientMacros = async (
+        mealId: number,
+        ingredientId: number,
+        macros: { calories: number; proteins: number; carbs: number; fats: number }
+    ) => {
+        try {
+            const updated = await mealService.setIngredientMacros(mealId, ingredientId, macros);
+            toast.success('Macros enregistrées');
+            await reloadTabMeals(updated.mealTabId);
+            setFailuresMeal(updated);
+        } catch (error) {
+            console.error('Error saving ingredient macros:', error);
+            toast.error('Erreur lors de l\'enregistrement');
         }
     };
 
@@ -485,11 +565,12 @@ const MealsPage = () => {
                                                     <span className="ml-ing-total">{meal.ingredients.length}</span>
                                                 </div>
                                             </td>
-                                            <td>
-                                                <span className="ml-ai-pending">
-                                                    <Sparkles size={13} />
-                                                    Calcul IA bientôt
-                                                </span>
+                                            <td onClick={(e) => e.stopPropagation()}>
+                                                <MealMacrosCell
+                                                    meal={meal}
+                                                    onCalculate={() => triggerAiCalcForExisting(meal)}
+                                                    onShowFailures={() => setFailuresMeal(meal)}
+                                                />
                                             </td>
                                             <td>
                                                 <span className="ml-muted">{formatDate(meal.updatedAt)}</span>
@@ -708,9 +789,257 @@ const MealsPage = () => {
                         </div>
                     </div>
                 )}
+
+                {/* AI confirmation modal — opens after save (create) or click "Calculer avec IA" */}
+                {aiConfirm && !aiProcessing && (
+                    <div className="modal-overlay" onClick={() => setAiConfirm(null)}>
+                        <div className="ml-ai-confirm-modal" onClick={(e) => e.stopPropagation()}>
+                            <div className="ml-ai-confirm-icon">
+                                <Sparkles size={36} />
+                            </div>
+                            <h3>
+                                {aiConfirm.kind === 'create'
+                                    ? 'Calculer les macros avec l\'IA ?'
+                                    : `Calculer les macros de « ${aiConfirm.mealName} » ?`}
+                            </h3>
+                            <p>
+                                L'IA va analyser chaque aliment puis estimer calories, protéines,
+                                glucides et lipides à partir de la base nutritionnelle.
+                            </p>
+                            <div className="ml-ai-confirm-actions">
+                                {aiConfirm.kind === 'create' ? (
+                                    <>
+                                        <button
+                                            className="btn-secondary"
+                                            onClick={() => submitCreate(
+                                                aiConfirm.pending.request,
+                                                aiConfirm.pending.imageFile,
+                                                aiConfirm.pending.targetTabName,
+                                                false
+                                            )}
+                                        >
+                                            Non, plus tard
+                                        </button>
+                                        <button
+                                            className="btn-primary"
+                                            onClick={() => submitCreate(
+                                                aiConfirm.pending.request,
+                                                aiConfirm.pending.imageFile,
+                                                aiConfirm.pending.targetTabName,
+                                                true
+                                            )}
+                                        >
+                                            <Sparkles size={16} />
+                                            Oui, calculer
+                                        </button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <button className="btn-secondary" onClick={() => setAiConfirm(null)}>
+                                            Annuler
+                                        </button>
+                                        <button className="btn-primary" onClick={confirmAiCalcForExisting}>
+                                            <Sparkles size={16} />
+                                            Calculer
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* AI processing modal (spinner) */}
+                {aiProcessing && (
+                    <div className="modal-overlay">
+                        <div className="ml-ai-processing-modal">
+                            <Loader2 size={42} className="ml-ai-spinner" />
+                            <h3>Calcul des macros en cours…</h3>
+                            <p>L'IA analyse vos aliments. Cela prend quelques secondes.</p>
+                        </div>
+                    </div>
+                )}
+
+                {/* Failures modal (manual macro entry per failed ingredient) */}
+                {failuresMeal && (
+                    <IngredientFailuresModal
+                        meal={failuresMeal}
+                        onClose={() => setFailuresMeal(null)}
+                        onSave={saveIngredientMacros}
+                    />
+                )}
             </div>
             <Toaster />
         </MainLayout>
+    );
+};
+
+// ──────────────────────────────────────────────────────────
+// Macros & Calories cell — shows totals, warning icon, or
+// "Calculer avec IA" button depending on the meal state.
+// ──────────────────────────────────────────────────────────
+const MealMacrosCell = ({
+    meal,
+    onCalculate,
+    onShowFailures,
+}: {
+    meal: Meal;
+    onCalculate: () => void;
+    onShowFailures: () => void;
+}) => {
+    const hasTotals = meal.totalCalories != null;
+    const hasFailures = !!meal.hasFailedIngredients;
+    const someComputed = meal.ingredients.some(i => i.calories != null);
+
+    // Nothing computed at all → "Calculate with AI" entry point
+    if (!hasTotals && !someComputed) {
+        return (
+            <button className="ml-calc-btn" onClick={onCalculate}>
+                <Sparkles size={14} />
+                Calculer avec IA
+            </button>
+        );
+    }
+
+    return (
+        <div className="ml-macros-cell">
+            {hasTotals ? (
+                <div className="ml-macros-values">
+                    <span className="ml-macros-kcal">{Math.round(meal.totalCalories!)} kcal</span>
+                    <span className="ml-macros-pgl">
+                        P {Math.round(meal.totalProteins ?? 0)}g · G {Math.round(meal.totalCarbs ?? 0)}g · L {Math.round(meal.totalFats ?? 0)}g
+                    </span>
+                </div>
+            ) : (
+                <button className="ml-calc-btn ml-calc-btn-sm" onClick={onCalculate}>
+                    <Calculator size={13} />
+                    Recalculer
+                </button>
+            )}
+            {hasFailures && (
+                <button
+                    type="button"
+                    className="ml-macros-warning"
+                    title="Un aliment n'a pas pu être calculé — cliquez pour saisir manuellement"
+                    onClick={onShowFailures}
+                    aria-label="Aliments non calculés"
+                >
+                    <AlertCircle size={16} />
+                </button>
+            )}
+        </div>
+    );
+};
+
+// ──────────────────────────────────────────────────────────
+// IngredientFailuresModal — lists all ingredients of a meal,
+// highlights those where AI couldn't match the food, and lets
+// the user enter macros manually for each.
+// ──────────────────────────────────────────────────────────
+const IngredientFailuresModal = ({
+    meal,
+    onClose,
+    onSave,
+}: {
+    meal: Meal;
+    onClose: () => void;
+    onSave: (
+        mealId: number,
+        ingredientId: number,
+        macros: { calories: number; proteins: number; carbs: number; fats: number }
+    ) => Promise<void>;
+}) => {
+    const [drafts, setDrafts] = useState<Record<number, { calories: string; proteins: string; carbs: string; fats: string }>>({});
+
+    const setField = (id: number, field: 'calories' | 'proteins' | 'carbs' | 'fats', value: string) => {
+        setDrafts(prev => ({
+            ...prev,
+            [id]: { calories: '', proteins: '', carbs: '', fats: '', ...(prev[id] ?? {}), [field]: value }
+        }));
+    };
+
+    const handleSave = async (ingredientId: number) => {
+        const d = drafts[ingredientId];
+        if (!d) return;
+        const macros = {
+            calories: parseFloat(d.calories) || 0,
+            proteins: parseFloat(d.proteins) || 0,
+            carbs: parseFloat(d.carbs) || 0,
+            fats: parseFloat(d.fats) || 0
+        };
+        await onSave(meal.mealId, ingredientId, macros);
+    };
+
+    return (
+        <div className="modal-overlay" onClick={onClose}>
+            <div className="ml-failures-modal" onClick={(e) => e.stopPropagation()}>
+                <div className="modal-header">
+                    <h2>Aliments à compléter</h2>
+                    <button className="close-btn" onClick={onClose}>
+                        <X size={24} />
+                    </button>
+                </div>
+                <div className="modal-body">
+                    <p className="ml-failures-hint">
+                        Saisissez les macros pour les aliments que l'IA n'a pas reconnus (surlignés).
+                    </p>
+                    {meal.ingredients.map((ing) => {
+                        const failed = !!ing.macroCalculationFailed;
+                        const id = ing.mealIngredientId!;
+                        const d = drafts[id];
+                        return (
+                            <div
+                                key={id}
+                                className={`ml-failure-row ${failed ? 'failed' : 'ok'}`}
+                            >
+                                <div className="ml-failure-head">
+                                    <span className="ml-failure-name">
+                                        {failed && <AlertCircle size={14} />}
+                                        {ing.name} <small>({ing.quantityGrams}g)</small>
+                                    </span>
+                                    {!failed && ing.calories != null && (
+                                        <span className="ml-failure-summary">
+                                            {Math.round(ing.calories)} kcal · P{Math.round(ing.proteins ?? 0)} G{Math.round(ing.carbs ?? 0)} L{Math.round(ing.fats ?? 0)}
+                                        </span>
+                                    )}
+                                </div>
+                                {failed && (
+                                    <div className="ml-failure-inputs">
+                                        <input
+                                            type="number"
+                                            placeholder="kcal"
+                                            value={d?.calories ?? ''}
+                                            onChange={(e) => setField(id, 'calories', e.target.value)}
+                                        />
+                                        <input
+                                            type="number"
+                                            placeholder="Prot. (g)"
+                                            value={d?.proteins ?? ''}
+                                            onChange={(e) => setField(id, 'proteins', e.target.value)}
+                                        />
+                                        <input
+                                            type="number"
+                                            placeholder="Gluc. (g)"
+                                            value={d?.carbs ?? ''}
+                                            onChange={(e) => setField(id, 'carbs', e.target.value)}
+                                        />
+                                        <input
+                                            type="number"
+                                            placeholder="Lip. (g)"
+                                            value={d?.fats ?? ''}
+                                            onChange={(e) => setField(id, 'fats', e.target.value)}
+                                        />
+                                        <button className="btn-primary" onClick={() => handleSave(id)}>
+                                            Enregistrer
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+        </div>
     );
 };
 

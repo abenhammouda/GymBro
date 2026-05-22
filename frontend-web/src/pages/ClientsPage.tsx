@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Users, ChevronRight, Search, UserCheck, PauseCircle, UserX, Edit3, TrendingUp, Apple, FileText, Camera, BarChart2, CalendarDays } from 'lucide-react';
+import { Users, ChevronRight, Search, UserCheck, PauseCircle, UserX, Edit3, Apple, FileText, Camera, BarChart2, CalendarDays } from 'lucide-react';
 import { clientService } from '../services/client.service';
 import type { ClientSummary, ClientProfile, CreateMacroPlanRequest } from '../services/client.service';
 import MainLayout from '../components/layout/MainLayout';
-import WeeklyDonutChart from '../components/clients/WeeklyDonutChart';
 import MacroPieChart from '../components/clients/MacroPieChart';
 import ClientCalendar from '../components/clients/ClientCalendar';
 import toast from 'react-hot-toast';
@@ -330,7 +329,7 @@ const ClientsPage: React.FC = () => {
                                 {/* ── All sections at once ── */}
                                 <div className="profile-body-grid">
 
-                                    {/* LEFT COLUMN */}
+                                    {/* LEFT COLUMN — Aperçu + Plan Nutritionnel */}
                                     <div className="profile-col">
 
                                         {/* Aperçu */}
@@ -358,50 +357,6 @@ const ClientsPage: React.FC = () => {
                                                     <h3 style={{ marginTop: '0.75rem' }}>Notes coaching</h3>
                                                     <p className="profile-notes">{profile.notes}</p>
                                                 </>
-                                            )}
-                                        </div>
-
-                                        {/* Calendrier */}
-                                        <div className="profile-section">
-                                            <div className="section-header">
-                                                <h3><CalendarDays size={13} /> Calendrier</h3>
-                                                <span className="section-sub">Séances &amp; repas planifiés</span>
-                                            </div>
-                                            <ClientCalendar adherentId={profile.adherent.adherentId} />
-                                        </div>
-                                    </div>
-
-                                    {/* RIGHT COLUMN */}
-                                    <div className="profile-col">
-
-                                        {/* Progression */}
-                                        <div className="profile-section">
-                                            <div className="section-header">
-                                                <h3><TrendingUp size={13} /> Progression</h3>
-                                                <span className="section-sub">{profile.weeklyProgress.length} semaine(s)</span>
-                                            </div>
-                                            <div className="chart-container" style={{ height: 240 }}>
-                                                <WeeklyDonutChart weeklyProgress={profile.weeklyProgress} />
-                                            </div>
-                                            {profile.weeklyProgress.length > 0 && (
-                                                <div className="weeks-table">
-                                                    <div className="weeks-table-header">
-                                                        <span>Semaine</span>
-                                                        <span>Date</span>
-                                                        <span>Poids</span>
-                                                        <span>Photos</span>
-                                                    </div>
-                                                    {profile.weeklyProgress.map(w => (
-                                                        <div key={w.progressReportId} className="weeks-table-row">
-                                                            <span className="week-badge">S{w.weekNumber}</span>
-                                                            <span>{new Date(w.reportDate).toLocaleDateString('fr-FR')}</span>
-                                                            <span className="week-weight">{w.currentWeight ?? '—'} kg</span>
-                                                            <span className="week-photos-count">
-                                                                <Camera size={12} /> {w.photos.length}
-                                                            </span>
-                                                        </div>
-                                                    ))}
-                                                </div>
                                             )}
                                         </div>
 
@@ -485,6 +440,17 @@ const ClientsPage: React.FC = () => {
                                             )}
                                         </div>
 
+                                    </div>
+
+                                    {/* RIGHT COLUMN — Calendrier pleine hauteur */}
+                                    <div className="profile-col">
+                                        <div className="profile-section profile-section--full">
+                                            <div className="section-header">
+                                                <h3><CalendarDays size={13} /> Calendrier</h3>
+                                                <span className="section-sub">Séances &amp; repas planifiés</span>
+                                            </div>
+                                            <ClientCalendar adherentId={profile.adherent.adherentId} />
+                                        </div>
                                     </div>
                                 </div>
 

@@ -14,5 +14,6 @@ namespace CoachingApp.Core.Entities
         // Navigation properties
         public Meal Meal { get; set; } = null!;
         public Adherent Adherent { get; set; } = null!;
+        public MealOverride? Override { get; set; }
     }
 }

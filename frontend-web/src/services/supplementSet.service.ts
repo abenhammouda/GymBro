@@ -19,12 +19,19 @@ export interface SupplementSetItem {
     orderIndex: number;
 }
 
+export interface SupplementGroup {
+    supplementGroupId?: number;
+    name: string;
+    orderIndex: number;
+    items: SupplementSetItem[];
+}
+
 export interface SupplementSet {
     supplementSetId: number;
     timing: SupplementTiming;
     index: number;
     orderIndex: number;
-    items: SupplementSetItem[];
+    groups: SupplementGroup[];
     createdAt: string;
     updatedAt: string;
 }
@@ -34,11 +41,16 @@ export const isStandardUnit = (u: string): u is StandardUnit =>
 
 export const formatTimingLabel = (timing: SupplementTiming, index: number): string => {
     switch (timing) {
-        case 'PreMeal': return `Pre-Repas ${index}`;
+        case 'PreMeal': return `Pré-Repas ${index}`;
         case 'PostMeal': return `Post-Repas ${index}`;
-        case 'PreWorkout': return `Pre-Workout ${index}`;
+        case 'PreWorkout': return `Pré-Workout ${index}`;
         case 'PostWorkout': return `Post-Workout ${index}`;
     }
+};
+
+export const shortTimingLabel = (timing: SupplementTiming, index: number): string => {
+    const pre = timing === 'PreMeal' || timing === 'PreWorkout';
+    return `${pre ? 'Pré' : 'Post'}-${index}`;
 };
 
 export const isMealTiming = (t: SupplementTiming) =>
@@ -47,8 +59,6 @@ export const isMealTiming = (t: SupplementTiming) =>
 export const isWorkoutTiming = (t: SupplementTiming) =>
     t === 'PreWorkout' || t === 'PostWorkout';
 
-// The backend serializes the enum as an integer. We expose it as a label string
-// but the API returns numeric values; convert below.
 const TIMING_FROM_ENUM: Record<number, SupplementTiming> = {
     0: 'PreMeal',
     1: 'PostMeal',
@@ -61,12 +71,17 @@ const normalizeSet = (raw: any): SupplementSet => ({
     timing: typeof raw.timing === 'number' ? TIMING_FROM_ENUM[raw.timing] : raw.timing,
     index: raw.index,
     orderIndex: raw.orderIndex,
-    items: (raw.items || []).map((i: any) => ({
-        supplementSetItemId: i.supplementSetItemId ?? undefined,
-        name: i.name,
-        quantity: i.quantity,
-        unit: i.unit,
-        orderIndex: i.orderIndex,
+    groups: (raw.groups || []).map((g: any) => ({
+        supplementGroupId: g.supplementGroupId ?? undefined,
+        name: g.name,
+        orderIndex: g.orderIndex,
+        items: (g.items || []).map((i: any) => ({
+            supplementSetItemId: i.supplementSetItemId ?? undefined,
+            name: i.name,
+            quantity: i.quantity,
+            unit: i.unit,
+            orderIndex: i.orderIndex,
+        })),
     })),
     createdAt: raw.createdAt,
     updatedAt: raw.updatedAt,
@@ -83,15 +98,30 @@ export const supplementSetService = {
         return normalizeSet(response.data);
     },
 
-    updateItems: async (
-        setId: number,
-        items: SupplementSetItem[]
-    ): Promise<SupplementSet> => {
-        const response = await api.put(`/supplement-sets/${setId}/items`, { items });
+    delete: async (setId: number): Promise<void> => {
+        await api.delete(`/supplement-sets/${setId}`);
+    },
+
+    addGroup: async (setId: number, name: string): Promise<SupplementSet> => {
+        const response = await api.post(`/supplement-sets/${setId}/groups`, { name });
         return normalizeSet(response.data);
     },
 
-    delete: async (setId: number): Promise<void> => {
-        await api.delete(`/supplement-sets/${setId}`);
+    renameGroup: async (setId: number, groupId: number, name: string): Promise<SupplementSet> => {
+        const response = await api.put(`/supplement-sets/${setId}/groups/${groupId}`, { name });
+        return normalizeSet(response.data);
+    },
+
+    deleteGroup: async (setId: number, groupId: number): Promise<void> => {
+        await api.delete(`/supplement-sets/${setId}/groups/${groupId}`);
+    },
+
+    updateGroupItems: async (
+        setId: number,
+        groupId: number,
+        items: SupplementSetItem[]
+    ): Promise<SupplementSet> => {
+        const response = await api.put(`/supplement-sets/${setId}/groups/${groupId}/items`, { items });
+        return normalizeSet(response.data);
     },
 };

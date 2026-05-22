@@ -38,6 +38,11 @@ Thumbs.db
 .expo/
 .expo-shared/
 
+# Secrets (never commit API keys)
+**/appsettings.json
+**/appsettings.*.json
+!**/appsettings.template.json
+
 # Database
 *.db
 *.sqlite
@@ -46,3 +51,9 @@ Thumbs.db
 # Logs
 logs/
 *.log
+
+# IDE caches
+*.lscache
+
+# Claude Code local config
+.claude/

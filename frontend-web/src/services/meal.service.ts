@@ -1,5 +1,5 @@
 import api from './api';
-import type { Meal, CreateMealRequest, UpdateMealRequest } from '../types';
+import type { Meal, CreateMealRequest, UpdateMealRequest, ManualMacros } from '../types';
 
 export const mealService = {
     getMealsByTab: async (tabId: number): Promise<Meal[]> => {
@@ -31,5 +31,22 @@ export const mealService = {
 
     deleteMeal: async (mealId: number): Promise<void> => {
         await api.delete(`/meals/${mealId}`);
+    },
+
+    calculateMacros: async (mealId: number): Promise<Meal> => {
+        const response = await api.post(`/meals/${mealId}/calculate-macros`);
+        return response.data;
+    },
+
+    setIngredientMacros: async (
+        mealId: number,
+        ingredientId: number,
+        macros: ManualMacros
+    ): Promise<Meal> => {
+        const response = await api.put(
+            `/meals/${mealId}/ingredients/${ingredientId}/macros`,
+            macros
+        );
+        return response.data;
     }
 };

@@ -82,10 +82,40 @@ public class MealsController : ControllerBase
     public async Task<IActionResult> DeleteMeal(int id)
     {
         var result = await _mealService.DeleteMealAsync(id);
-        
+
         if (!result)
             return NotFound();
 
         return NoContent();
+    }
+
+    [HttpPost("{id}/calculate-macros")]
+    public async Task<ActionResult<MealResponse>> CalculateMacros(int id)
+    {
+        try
+        {
+            var meal = await _mealService.CalculateMacrosAsync(id);
+            if (meal == null) return NotFound();
+            return Ok(meal);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPut("{id}/ingredients/{ingredientId}/macros")]
+    public async Task<ActionResult<MealResponse>> SetIngredientMacros(int id, int ingredientId, [FromBody] ManualMacrosDto dto)
+    {
+        try
+        {
+            var meal = await _mealService.SetIngredientMacrosAsync(id, ingredientId, dto);
+            if (meal == null) return NotFound();
+            return Ok(meal);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 }

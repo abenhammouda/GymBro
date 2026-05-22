@@ -4,6 +4,7 @@ using CoachingApp.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CoachingApp.Infrastructure.Migrations
 {
     [DbContext(typeof(CoachingDbContext))]
-    partial class CoachingDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260509115629_AddSupplementGroups")]
+    partial class AddSupplementGroups
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -29,9 +32,6 @@ namespace CoachingApp.Infrastructure.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AdherentId"));
-
-                    b.Property<int?>("CaloriesDelta")
-                        .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -65,9 +65,6 @@ namespace CoachingApp.Infrastructure.Migrations
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("NutritionGoal")
-                        .HasColumnType("int");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
@@ -408,35 +405,6 @@ namespace CoachingApp.Infrastructure.Migrations
                     b.ToTable("ExerciseTemplates");
                 });
 
-            modelBuilder.Entity("CoachingApp.Core.Entities.FoodAliasCache", b =>
-                {
-                    b.Property<int>("FoodAliasCacheId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("FoodAliasCacheId"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("NormalizedInput")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<int?>("NutritionFoodId")
-                        .HasColumnType("int");
-
-                    b.HasKey("FoodAliasCacheId");
-
-                    b.HasIndex("NormalizedInput")
-                        .IsUnique();
-
-                    b.HasIndex("NutritionFoodId");
-
-                    b.ToTable("FoodAliasCaches");
-                });
-
             modelBuilder.Entity("CoachingApp.Core.Entities.IntakePhoto", b =>
                 {
                     b.Property<int>("IntakePhotoId")
@@ -563,24 +531,6 @@ namespace CoachingApp.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MealIngredientId"));
 
-                    b.Property<decimal?>("Calories")
-                        .HasPrecision(8, 2)
-                        .HasColumnType("decimal(8,2)");
-
-                    b.Property<decimal?>("Carbs")
-                        .HasPrecision(8, 2)
-                        .HasColumnType("decimal(8,2)");
-
-                    b.Property<decimal?>("Fats")
-                        .HasPrecision(8, 2)
-                        .HasColumnType("decimal(8,2)");
-
-                    b.Property<bool>("MacroCalculationFailed")
-                        .HasColumnType("bit");
-
-                    b.Property<int?>("MacroSource")
-                        .HasColumnType("int");
-
                     b.Property<int>("MealId")
                         .HasColumnType("int");
 
@@ -588,15 +538,8 @@ namespace CoachingApp.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("NutritionFoodId")
-                        .HasColumnType("int");
-
                     b.Property<int>("OrderIndex")
                         .HasColumnType("int");
-
-                    b.Property<decimal?>("Proteins")
-                        .HasPrecision(8, 2)
-                        .HasColumnType("decimal(8,2)");
 
                     b.Property<decimal>("QuantityGrams")
                         .HasPrecision(8, 2)
@@ -606,44 +549,7 @@ namespace CoachingApp.Infrastructure.Migrations
 
                     b.HasIndex("MealId");
 
-                    b.HasIndex("NutritionFoodId");
-
                     b.ToTable("MealIngredients");
-                });
-
-            modelBuilder.Entity("CoachingApp.Core.Entities.MealOverride", b =>
-                {
-                    b.Property<int>("MealOverrideId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MealOverrideId"));
-
-                    b.Property<string>("ActionType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Notes")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("ReplacementMealId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ScheduledMealId")
-                        .HasColumnType("int");
-
-                    b.HasKey("MealOverrideId");
-
-                    b.HasIndex("ReplacementMealId");
-
-                    b.HasIndex("ScheduledMealId")
-                        .IsUnique();
-
-                    b.ToTable("MealOverrides");
                 });
 
             modelBuilder.Entity("CoachingApp.Core.Entities.MealPlan", b =>
@@ -820,53 +726,6 @@ namespace CoachingApp.Infrastructure.Migrations
                     b.HasKey("MuscleGroupImageId");
 
                     b.ToTable("MuscleGroupImages");
-                });
-
-            modelBuilder.Entity("CoachingApp.Core.Entities.NutritionFood", b =>
-                {
-                    b.Property<int>("NutritionFoodId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("NutritionFoodId"));
-
-                    b.Property<decimal>("CaloriesPer100g")
-                        .HasPrecision(8, 2)
-                        .HasColumnType("decimal(8,2)");
-
-                    b.Property<string>("CanonicalName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("CanonicalNameFr")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<decimal>("CarbsPer100g")
-                        .HasPrecision(8, 2)
-                        .HasColumnType("decimal(8,2)");
-
-                    b.Property<decimal>("FatsPer100g")
-                        .HasPrecision(8, 2)
-                        .HasColumnType("decimal(8,2)");
-
-                    b.Property<decimal>("ProteinsPer100g")
-                        .HasPrecision(8, 2)
-                        .HasColumnType("decimal(8,2)");
-
-                    b.Property<string>("Source")
-                        .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("nvarchar(32)");
-
-                    b.HasKey("NutritionFoodId");
-
-                    b.HasIndex("CanonicalName");
-
-                    b.HasIndex("CanonicalNameFr");
-
-                    b.ToTable("NutritionFoods");
                 });
 
             modelBuilder.Entity("CoachingApp.Core.Entities.Payment", b =>
@@ -1611,16 +1470,6 @@ namespace CoachingApp.Infrastructure.Migrations
                     b.Navigation("Coach");
                 });
 
-            modelBuilder.Entity("CoachingApp.Core.Entities.FoodAliasCache", b =>
-                {
-                    b.HasOne("CoachingApp.Core.Entities.NutritionFood", "NutritionFood")
-                        .WithMany()
-                        .HasForeignKey("NutritionFoodId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("NutritionFood");
-                });
-
             modelBuilder.Entity("CoachingApp.Core.Entities.IntakePhoto", b =>
                 {
                     b.HasOne("CoachingApp.Core.Entities.Adherent", "Adherent")
@@ -1666,32 +1515,7 @@ namespace CoachingApp.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("CoachingApp.Core.Entities.NutritionFood", "NutritionFood")
-                        .WithMany()
-                        .HasForeignKey("NutritionFoodId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.Navigation("Meal");
-
-                    b.Navigation("NutritionFood");
-                });
-
-            modelBuilder.Entity("CoachingApp.Core.Entities.MealOverride", b =>
-                {
-                    b.HasOne("CoachingApp.Core.Entities.Meal", "ReplacementMeal")
-                        .WithMany()
-                        .HasForeignKey("ReplacementMealId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.HasOne("CoachingApp.Core.Entities.ScheduledMeal", "ScheduledMeal")
-                        .WithOne("Override")
-                        .HasForeignKey("CoachingApp.Core.Entities.MealOverride", "ScheduledMealId")
-                        .OnDelete(DeleteBehavior.ClientCascade)
-                        .IsRequired();
-
-                    b.Navigation("ReplacementMeal");
-
-                    b.Navigation("ScheduledMeal");
                 });
 
             modelBuilder.Entity("CoachingApp.Core.Entities.MealPlan", b =>
@@ -2024,11 +1848,6 @@ namespace CoachingApp.Infrastructure.Migrations
                     b.Navigation("BodyMeasurements");
 
                     b.Navigation("ProgressPhotos");
-                });
-
-            modelBuilder.Entity("CoachingApp.Core.Entities.ScheduledMeal", b =>
-                {
-                    b.Navigation("Override");
                 });
 
             modelBuilder.Entity("CoachingApp.Core.Entities.SubscriptionTier", b =>

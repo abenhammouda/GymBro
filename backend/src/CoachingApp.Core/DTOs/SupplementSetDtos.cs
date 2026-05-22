@@ -10,16 +10,27 @@ public record SupplementSetItemDto(
     int OrderIndex
 );
 
+public record SupplementGroupDto(
+    int? SupplementGroupId,
+    string Name,
+    int OrderIndex,
+    List<SupplementSetItemDto> Items
+);
+
 public record SupplementSetResponse(
     int SupplementSetId,
     SupplementTiming Timing,
     int Index,
     int OrderIndex,
-    List<SupplementSetItemDto> Items,
+    List<SupplementGroupDto> Groups,
     DateTime CreatedAt,
     DateTime UpdatedAt
 );
 
 public record AddNextSupplementSetRequest(string Kind);
 
-public record UpdateSupplementSetItemsRequest(List<SupplementSetItemDto> Items);
+public record AddGroupRequest(string Name);
+
+public record RenameGroupRequest(string Name);
+
+public record UpdateGroupItemsRequest(List<SupplementSetItemDto> Items);

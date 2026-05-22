@@ -13,5 +13,5 @@ public class SupplementSet
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     public Coach Coach { get; set; } = null!;
-    public ICollection<SupplementSetItem> Items { get; set; } = new List<SupplementSetItem>();
+    public ICollection<SupplementGroup> Groups { get; set; } = new List<SupplementGroup>();
 }

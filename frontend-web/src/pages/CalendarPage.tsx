@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Search, User, Calendar as CalendarIcon, Plus, Trash2, X, Dumbbell, UtensilsCrossed } from 'lucide-react';
 import MainLayout from '../components/layout/MainLayout';
-import ImportWorkoutModal from '../components/ImportWorkoutModal';
+import ImportModal from '../components/ImportModal';
+import MacroPieChart from '../components/clients/MacroPieChart';
 import { format, startOfWeek, endOfWeek, addDays, addWeeks, subWeeks, addMonths, subMonths, startOfMonth, endOfMonth, isSameMonth, isSameDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import type { AssignedClient, ScheduledWorkoutSession, WorkoutSession, ScheduledMeal, CalendarEventType } from '../types';
-import { isScheduledWorkout } from '../types';
+import type { ScheduledWorkoutSession, ScheduledMeal, CalendarEventType } from '../types';
+import type { ClientSummary, MacroPlan } from '../services/client.service';
+import { isScheduledWorkout, isScheduledMeal } from '../types';
 
 const CATEGORY_GRADIENTS: Record<string, string> = {
     UpperBody:   'linear-gradient(135deg, #1e88e5 0%, #1565c0 100%)',
@@ -68,19 +70,36 @@ function DraggableSession({ id, children, className, style: propStyle }: { id: s
 const CalendarPage = () => {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [view, setView] = useState<'Week' | 'Month'>('Week');
-    const [clients, setClients] = useState<AssignedClient[]>([]);
-    const [selectedClient, setSelectedClient] = useState<AssignedClient | null>(null);
+    const [clients, setClients] = useState<ClientSummary[]>([]);
+    const [selectedClient, setSelectedClient] = useState<ClientSummary | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [scheduledSessions, setScheduledSessions] = useState<ScheduledWorkoutSession[]>([]);
     const [scheduledMeals, setScheduledMeals] = useState<ScheduledMeal[]>([]);
     const [loading, setLoading] = useState(true);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-    const [hoveredClient, setHoveredClient] = useState<AssignedClient | null>(null);
+    const [hoveredClient, setHoveredClient] = useState<ClientSummary | null>(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [sessionToDeleteId, setSessionToDeleteId] = useState<number | null>(null);
     const [mealToDeleteId, setMealToDeleteId] = useState<number | null>(null);
     const [showWorkouts, setShowWorkouts] = useState(true);
     const [showMeals, setShowMeals] = useState(true);
+    const [hoveredEvent, setHoveredEvent] = useState<{
+        key: string;
+        isWorkout: boolean;
+        event: CalendarEventType;
+        rect: { top: number; left: number; bottom: number };
+    } | null>(null);
+    const [clientMacroPlan, setClientMacroPlan] = useState<MacroPlan | null>(null);
+
+    useEffect(() => {
+        if (!selectedClient) {
+            setClientMacroPlan(null);
+            return;
+        }
+        clientService.getCurrentMacroPlan(selectedClient.coachClientId)
+            .then(setClientMacroPlan)
+            .catch(() => setClientMacroPlan(null));
+    }, [selectedClient]);
 
     const handleDeleteClick = (e: React.MouseEvent, id: number, isWorkout: boolean = true) => {
         // Prevent drag start
@@ -191,7 +210,7 @@ const CalendarPage = () => {
     };
 
     const filteredClients = clients.filter(client =>
-        client.name.toLowerCase().includes(searchQuery.toLowerCase())
+        client.adherentName.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     const handlePrevious = () => {
@@ -210,39 +229,16 @@ const CalendarPage = () => {
         }
     };
 
-    const handleImportWorkout = async (workout: WorkoutSession) => {
-        if (!selectedClient) return;
+    const handleWorkoutImported = () => {
+        toast.success('Séance importée !');
+        if (selectedClient) loadScheduledSessions(selectedClient.adherentId);
+        setIsImportModalOpen(false);
+    };
 
-        try {
-            // Schedule for the Monday of the current view
-            const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
-            const targetDate = new Date(weekStart);
-            targetDate.setHours(12, 0, 0, 0); // Set to noon to avoid timezone issues with UTC conversion
-
-            // Validate Max 2 sessions constraint
-            const sessionsOnTargetDay = scheduledSessions.filter(s =>
-                isSameDay(new Date(s.scheduledDate), targetDate)
-            );
-
-            if (sessionsOnTargetDay.length >= 2) {
-                toast.error(`Le Lundi est complet (max 2 séances). Veuillez déplacer une session avant d'importer.`);
-                return;
-            }
-
-            await scheduledWorkoutSessionService.createScheduledSession({
-                workoutSessionId: workout.workoutSessionId,
-                adherentId: selectedClient.adherentId,
-                scheduledDate: targetDate.toISOString(),
-                scheduledTime: '09:00'
-            });
-
-            toast.success(`Séance "${workout.name}" importée !`);
-            loadScheduledSessions(selectedClient.adherentId);
-            setIsImportModalOpen(false);
-        } catch (error) {
-            console.error('Error importing workout:', error);
-            toast.error("Erreur lors de l'import");
-        }
+    const handleMealImported = () => {
+        toast.success('Repas planifié !');
+        if (selectedClient) loadScheduledMeals(selectedClient.adherentId);
+        setIsImportModalOpen(false);
     };
 
     const handleDragStart = (event: DragStartEvent) => {
@@ -257,51 +253,45 @@ const CalendarPage = () => {
             return;
         }
 
-        const sessionId = Number(active.id);
+        // Parse "workout-{id}" format
+        const rawId = active.id.toString();
+        if (!rawId.startsWith('workout-')) { setActiveId(null); return; }
+        const sessionId = Number(rawId.replace('workout-', ''));
+
         const newDateStr = over.id as string;
 
-        // Find existing session
         const session = scheduledSessions.find(s => s.scheduledWorkoutSessionId === sessionId);
-        if (!session) {
-            setActiveId(null);
-            return;
-        }
+        if (!session) { setActiveId(null); return; }
 
-        // Check if date actually changed
         const currentDateStr = format(new Date(session.scheduledDate), 'yyyy-MM-dd');
-        if (currentDateStr === newDateStr) {
-            setActiveId(null);
-            return;
-        }
+        if (currentDateStr === newDateStr) { setActiveId(null); return; }
 
-        // Validate Max 2 sessions constraint
+        // Sessions on target day (excluding the dragged one)
         const sessionsOnTargetDay = scheduledSessions.filter(s =>
-            s.scheduledWorkoutSessionId !== sessionId && // exclude current
+            s.scheduledWorkoutSessionId !== sessionId &&
             format(new Date(s.scheduledDate), 'yyyy-MM-dd') === newDateStr
         );
 
-        if (sessionsOnTargetDay.length >= 2) {
-            toast.error("Maximum 2 séances par jour autorisées !");
-            setActiveId(null);
-            return;
-        }
-
-        // Optimistic update
         const previousSessions = [...scheduledSessions];
-        const updatedSession = { ...session, scheduledDate: new Date(newDateStr).toISOString() };
-
-        setScheduledSessions(prev => prev.map(s => s.scheduledWorkoutSessionId === sessionId ? updatedSession : s));
-
         try {
+            // Swap: move sessions from target day back to original day
+            for (const swapSession of sessionsOnTargetDay) {
+                await scheduledWorkoutSessionService.updateScheduledSession(swapSession.scheduledWorkoutSessionId, {
+                    scheduledDate: new Date(currentDateStr + 'T12:00:00.000Z').toISOString(),
+                    scheduledTime: swapSession.scheduledTime
+                });
+            }
+            // Move the dragged session to target day
             await scheduledWorkoutSessionService.updateScheduledSession(sessionId, {
-                scheduledDate: new Date(newDateStr).toISOString(),
-                scheduledTime: session.scheduledTime // Keep time
+                scheduledDate: new Date(newDateStr + 'T12:00:00.000Z').toISOString(),
+                scheduledTime: session.scheduledTime
             });
-            toast.success('Session déplacée !');
+            toast.success(sessionsOnTargetDay.length > 0 ? 'Séances échangées !' : 'Séance déplacée !');
+            if (selectedClient) loadScheduledSessions(selectedClient.adherentId);
         } catch (error) {
-            console.error("Failed to move session", error);
-            toast.error("Erreur lors du déplacement");
-            setScheduledSessions(previousSessions); // Revert
+            console.error('Failed to move session', error);
+            toast.error('Erreur lors du déplacement');
+            setScheduledSessions(previousSessions);
         }
 
         setActiveId(null);
@@ -368,13 +358,13 @@ const CalendarPage = () => {
                             </div>
                         ))}
                     </div>
-                    <div className="calendar-body" style={{ display: 'flex', flex: 1, overflowY: 'auto' }}>
+                    <div className="calendar-body" style={{ display: 'flex', flex: 1 }}>
                         {days.map((day, index) => {
                             const dateStr = format(day, 'yyyy-MM-dd');
-                            // Filter events for this day (workouts + meals)
-                            const dayEvents = getFilteredEvents().filter(event => {
-                                return isSameDay(new Date(event.scheduledDate), day);
-                            });
+                            // Filter + sort by scheduledTime so pre-workout items appear before the session
+                            const dayEvents = getFilteredEvents()
+                                .filter(event => isSameDay(new Date(event.scheduledDate), day))
+                                .sort((a, b) => (a.scheduledTime ?? '23:59').localeCompare(b.scheduledTime ?? '23:59'));
 
                             return (
                                 <DroppableDay
@@ -387,108 +377,42 @@ const CalendarPage = () => {
                                             const isWorkout = isScheduledWorkout(event);
                                             const id = isWorkout ? event.scheduledWorkoutSessionId : event.scheduledMealId;
                                             const name = isWorkout ? event.workoutSession?.name : event.meal?.name;
-                                            const gradient = isWorkout
-                                                ? getCategoryGradient(event.workoutSession?.category)
-                                                : 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)';
+                                            const eventKey = `${isWorkout ? 'workout' : 'meal'}-${id}`;
+                                            const pillClass = isWorkout ? 'cal-pill cal-pill--workout' : 'cal-pill cal-pill--meal';
 
                                             return (
                                                 <DraggableSession
-                                                    key={`${isWorkout ? 'workout' : 'meal'}-${id}`}
-                                                    id={`${isWorkout ? 'workout' : 'meal'}-${id}`}
-                                                    className="calendar-session-card-wrapper"
+                                                    key={eventKey}
+                                                    id={eventKey}
+                                                    className="cal-pill-wrapper"
                                                 >
                                                     <div
-                                                        className="calendar-session-card"
-                                                        style={{
-                                                            background: 'white',
-                                                            borderRadius: '12px',
-                                                            minHeight: '100px',
-                                                            display: 'flex',
-                                                            flexDirection: 'row',
-                                                            overflow: 'hidden',
-                                                            boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                                                        className={pillClass}
+                                                        onMouseEnter={(e) => {
+                                                            const r = e.currentTarget.getBoundingClientRect();
+                                                            setHoveredEvent({
+                                                                key: eventKey,
+                                                                isWorkout,
+                                                                event,
+                                                                rect: { top: r.top, left: r.left, bottom: r.bottom }
+                                                            });
                                                         }}
+                                                        onMouseLeave={() => setHoveredEvent(null)}
                                                     >
-                                                        {/* Category color on the left */}
-                                                        <div style={{
-                                                            width: '80px',
-                                                            minWidth: '80px',
-                                                            background: gradient,
-                                                            flexShrink: 0,
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            justifyContent: 'center'
-                                                        }}>
-                                                            {isWorkout ? <Dumbbell size={28} color="white" /> : <UtensilsCrossed size={28} color="white" />}
-                                                        </div>
-
-                                                        {/* Content on the right */}
-                                                        <div style={{
-                                                            flex: 1,
-                                                            padding: '0.75rem',
-                                                            display: 'flex',
-                                                            flexDirection: 'column',
-                                                            justifyContent: 'space-between',
-                                                            gap: '0.5rem'
-                                                        }}>
-                                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
-                                                                <div className="calendar-session-card-title" title={name} style={{
-                                                                    fontWeight: '600',
-                                                                    fontSize: '0.95rem',
-                                                                    color: '#1f2937',
-                                                                    lineHeight: '1.3',
-                                                                    flex: 1
-                                                                }}>
-                                                                    {name}
-                                                                </div>
-                                                                <button
-                                                                    className="delete-session-btn"
-                                                                    onClick={(e) => handleDeleteClick(e, id, isWorkout)}
-                                                                    onPointerDown={(e) => e.stopPropagation()}
-                                                                    style={{
-                                                                        background: '#fee2e2',
-                                                                        border: 'none',
-                                                                        borderRadius: '6px',
-                                                                        padding: '6px',
-                                                                        cursor: 'pointer',
-                                                                        color: '#dc2626',
-                                                                        display: 'flex',
-                                                                        flexShrink: 0,
-                                                                        transition: 'all 0.2s'
-                                                                    }}
-                                                                    onMouseEnter={(e) => {
-                                                                        e.currentTarget.style.background = '#fecaca';
-                                                                    }}
-                                                                    onMouseLeave={(e) => {
-                                                                        e.currentTarget.style.background = '#fee2e2';
-                                                                    }}
-                                                                >
-                                                                    <Trash2 size={14} />
-                                                                </button>
-                                                            </div>
-
-                                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                                                                {event.scheduledTime && (
-                                                                    <div style={{
-                                                                        fontSize: '0.8rem',
-                                                                        color: '#6b7280',
-                                                                        display: 'flex',
-                                                                        alignItems: 'center',
-                                                                        gap: '0.25rem'
-                                                                    }}>
-                                                                        <CalendarIcon size={12} />
-                                                                        {event.scheduledTime}
-                                                                    </div>
-                                                                )}
-                                                                {isWorkout && event.workoutSession?.duration && (
-                                                                    <div style={{
-                                                                        fontSize: '0.8rem',
-                                                                        color: '#6b7280'
-                                                                    }}>
-                                                                        {event.workoutSession.duration} min
-                                                                    </div>
-                                                                )}
-                                                            </div>
+                                                        <span className="cal-pill__icon">
+                                                            {isWorkout
+                                                                ? <Dumbbell size={13} />
+                                                                : <UtensilsCrossed size={13} />}
+                                                        </span>
+                                                        <span className="cal-pill__name">{name}</span>
+                                                        <div className="cal-pill__actions">
+                                                            <button
+                                                                className="cal-pill__del"
+                                                                onClick={(e) => handleDeleteClick(e, id, isWorkout)}
+                                                                onPointerDown={(e) => e.stopPropagation()}
+                                                            >
+                                                                <Trash2 size={11} />
+                                                            </button>
                                                         </div>
                                                     </div>
                                                 </DraggableSession>
@@ -502,68 +426,62 @@ const CalendarPage = () => {
 
                     <DragOverlay>
                         {activeEvent ? (
-                            <div className="calendar-session-card" style={{
-                                width: '250px',
-                                cursor: 'grabbing',
-                                boxShadow: '0 10px 15px rgba(0,0,0,0.2)',
-                                background: 'white',
-                                borderRadius: '12px',
-                                minHeight: '100px',
-                                display: 'flex',
-                                flexDirection: 'row',
-                                overflow: 'hidden'
-                            }}>
-                                {/* Category color on the left */}
-                                <div style={{
-                                    width: '80px',
-                                    minWidth: '80px',
-                                    background: isScheduledWorkout(activeEvent)
-                                        ? getCategoryGradient(activeEvent.workoutSession?.category)
-                                        : 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-                                    flexShrink: 0,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center'
-                                }}>
-                                    {isScheduledWorkout(activeEvent)
-                                        ? <Dumbbell size={28} color="white" />
-                                        : <UtensilsCrossed size={28} color="white" />
-                                    }
-                                </div>
-
-                                {/* Content on the right */}
-                                <div style={{
-                                    flex: 1,
-                                    padding: '0.75rem',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    justifyContent: 'space-between',
-                                    gap: '0.5rem'
-                                }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
-                                        <div className="calendar-session-card-title" style={{
-                                            fontWeight: '600',
-                                            fontSize: '0.9rem',
-                                            color: '#1f2937',
-                                            lineHeight: '1.3',
-                                            flex: 1
-                                        }}>
-                                            {isScheduledWorkout(activeEvent) ? activeEvent.workoutSession?.name : activeEvent.meal?.name}
-                                        </div>
-                                        <div style={{ opacity: 0.5, color: '#dc2626' }}><Trash2 size={14} /></div>
-                                    </div>
-                                    <div className="calendar-session-card-duration" style={{
-                                        fontSize: '0.85rem',
-                                        color: isScheduledWorkout(activeEvent) ? '#667eea' : '#f5576c',
-                                        fontWeight: '500'
-                                    }}>
-                                        {isScheduledWorkout(activeEvent) && activeEvent.workoutSession?.duration ? `⏱️ ${activeEvent.workoutSession.duration} min` : ''}
-                                    </div>
-                                </div>
+                            <div className={isScheduledWorkout(activeEvent) ? 'cal-pill cal-pill--workout' : 'cal-pill cal-pill--meal'}
+                                style={{ width: '180px', cursor: 'grabbing', opacity: 0.9, boxShadow: '0 6px 16px rgba(0,0,0,0.15)' }}>
+                                <span className="cal-pill__icon">
+                                    {isScheduledWorkout(activeEvent) ? <Dumbbell size={13} /> : <UtensilsCrossed size={13} />}
+                                </span>
+                                <span className="cal-pill__name">
+                                    {isScheduledWorkout(activeEvent) ? activeEvent.workoutSession?.name : activeEvent.meal?.name}
+                                </span>
                             </div>
                         ) : null}
                     </DragOverlay>
                 </div>
+
+                {hoveredEvent && (() => {
+                    const { event: hovEvt, isWorkout: isW, rect } = hoveredEvent;
+                    const estimatedHeight = 80;
+                    const placeAbove = rect.bottom + estimatedHeight > window.innerHeight - 10;
+                    const top = placeAbove ? rect.top - estimatedHeight - 5 : rect.bottom + 5;
+                    const left = Math.min(rect.left, window.innerWidth - 250);
+                    return (
+                        <div className="cal-pill__tooltip" style={{ position: 'fixed', top, left }}>
+                            {isW && isScheduledWorkout(hovEvt) ? (
+                                <>
+                                    {hovEvt.scheduledTime && <div>🕐 {hovEvt.scheduledTime}</div>}
+                                    {hovEvt.workoutSession?.duration && <div>⏱ {hovEvt.workoutSession.duration} min</div>}
+                                    {hovEvt.workoutSession?.category && <div>🏷 {hovEvt.workoutSession.category}</div>}
+                                    {hovEvt.workoutSession?.exerciseCount != null && <div>💪 {hovEvt.workoutSession.exerciseCount} exercices</div>}
+                                </>
+                            ) : !isW && isScheduledMeal(hovEvt) ? (() => {
+                                const meal = hovEvt.meal;
+                                const ings = meal?.ingredients ?? [];
+                                const firstThree = ings.slice(0, 3).map(i => i.name).join(', ');
+                                const extra = ings.length > 3 ? ` (+${ings.length - 3})` : '';
+                                return (
+                                    <>
+                                        {meal?.totalCalories != null && (
+                                            <div>
+                                                🔥 {Math.round(meal.totalCalories)} kcal
+                                                {meal.totalProteins != null && (
+                                                    <span style={{ color: '#6b7280', fontSize: '0.72rem', marginLeft: 6 }}>
+                                                        • P:{Math.round(meal.totalProteins)}g C:{Math.round(meal.totalCarbs ?? 0)}g F:{Math.round(meal.totalFats ?? 0)}g
+                                                    </span>
+                                                )}
+                                            </div>
+                                        )}
+                                        {ings.length > 0 && (
+                                            <div style={{ color: '#6b7280', fontSize: '0.75rem', marginTop: 2 }}>
+                                                {firstThree}{extra}
+                                            </div>
+                                        )}
+                                    </>
+                                );
+                            })() : null}
+                        </div>
+                    );
+                })()}
             </DndContext>
         );
     };
@@ -765,7 +683,7 @@ const CalendarPage = () => {
                                             src={client.profilePicture.startsWith('http')
                                                 ? client.profilePicture
                                                 : `${import.meta.env.VITE_API_URL}${client.profilePicture}`}
-                                            alt={client.name}
+                                            alt={client.adherentName}
                                             className="client-avatar"
                                         />
                                     ) : (
@@ -773,18 +691,15 @@ const CalendarPage = () => {
                                             <User size={20} />
                                         </div>
                                     )}
-                                    <span className="client-name">{client.name}</span>
+                                    <span className="client-name">{client.adherentName}</span>
 
                                     {hoveredClient?.adherentId === client.adherentId && (
                                         <div className="client-tooltip">
-                                            <h4>{client.name}</h4>
+                                            <h4>{client.adherentName}</h4>
                                             {client.age && <p><strong>Âge:</strong> {client.age} ans</p>}
-                                            <p><strong>Email:</strong> {client.email}</p>
-                                            {client.phoneNumber && (
-                                                <p><strong>Téléphone:</strong> {client.phoneNumber}</p>
-                                            )}
-                                            {client.goal && (
-                                                <p><strong>Objectif:</strong> {client.goal}</p>
+                                            {client.adherentEmail && <p><strong>Email:</strong> {client.adherentEmail}</p>}
+                                            {client.goalSummary && (
+                                                <p><strong>Objectif:</strong> {client.goalSummary}</p>
                                             )}
                                         </div>
                                     )}
@@ -792,13 +707,73 @@ const CalendarPage = () => {
                             ))
                         )}
                     </div>
+
+                    {/* Client info panel: stats + nutrition plan + goal */}
+                    {selectedClient && (
+                        <div className="client-info-panel">
+                            <div className="client-info-stats">
+                                {selectedClient.height != null && (
+                                    <div className="client-info-stat">
+                                        <span className="client-info-stat-label">Taille</span>
+                                        <span className="client-info-stat-value">{Math.round(selectedClient.height)} cm</span>
+                                    </div>
+                                )}
+                                {selectedClient.age != null && (
+                                    <div className="client-info-stat">
+                                        <span className="client-info-stat-label">Âge</span>
+                                        <span className="client-info-stat-value">{selectedClient.age} ans</span>
+                                    </div>
+                                )}
+                                {selectedClient.gender && (
+                                    <div className="client-info-stat">
+                                        <span className="client-info-stat-label">Sexe</span>
+                                        <span className="client-info-stat-value">{selectedClient.gender}</span>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="client-info-section">
+                                <div className="client-info-section-title">🍽 Plan Nutritionnel</div>
+                                {clientMacroPlan ? (
+                                    <div style={{ height: 180 }}>
+                                        <MacroPieChart macroPlan={clientMacroPlan} />
+                                    </div>
+                                ) : (
+                                    <div className="client-info-empty">Pas de plan nutritionnel défini</div>
+                                )}
+                            </div>
+
+                            <div className="client-info-section">
+                                <div className="client-info-section-title">🎯 Objectif</div>
+                                {(() => {
+                                    const ng = selectedClient.nutritionGoal;
+                                    const delta = selectedClient.caloriesDelta;
+                                    if (ng === 'Deficit') {
+                                        return <div className="client-info-goal client-info-goal--deficit">Déficit calorique{delta != null && ` · −${Math.abs(delta)} kcal`}</div>;
+                                    }
+                                    if (ng === 'Surplus') {
+                                        return <div className="client-info-goal client-info-goal--surplus">Surplus calorique{delta != null && ` · +${Math.abs(delta)} kcal`}</div>;
+                                    }
+                                    if (ng === 'Maintenance') {
+                                        return <div className="client-info-goal client-info-goal--maintain">Maintien</div>;
+                                    }
+                                    return <div className="client-info-goal client-info-goal--undefined">Objectif à définir</div>;
+                                })()}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
             {selectedClient && (
-                <ImportWorkoutModal
+                <ImportModal
                     isOpen={isImportModalOpen}
                     onClose={() => setIsImportModalOpen(false)}
-                    onSelectWorkout={handleImportWorkout}
+                    selectedClient={selectedClient}
+                    currentDate={currentDate}
+                    scheduledSessions={scheduledSessions}
+                    scheduledMeals={scheduledMeals}
+                    onWorkoutImported={handleWorkoutImported}
+                    onMealImported={handleMealImported}
                 />
             )}
 

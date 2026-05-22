@@ -10,5 +10,7 @@ namespace CoachingApp.Core.Interfaces
         Task<ScheduledMealResponse> CreateScheduledMealAsync(CreateScheduledMealRequest request);
         Task<ScheduledMealResponse> UpdateScheduledMealAsync(int scheduledMealId, UpdateScheduledMealRequest request);
         Task<bool> DeleteScheduledMealAsync(int scheduledMealId);
+        Task<MealOverrideInfo> CreateOverrideAsync(int scheduledMealId, CreateMealOverrideRequest request);
+        Task<bool> DeleteOverrideAsync(int scheduledMealId);
     }
 }

@@ -107,6 +107,12 @@ builder.Services.AddScoped<MealTabService>();
 builder.Services.AddScoped<MealService>();
 builder.Services.AddScoped<IScheduledMealService, ScheduledMealService>();
 
+// Register Nutrition AI services (Gemini normalization + CIQUAL lookup)
+// OpenAiService is kept on disk but not registered — switch back by swapping the line below.
+builder.Services.AddScoped<GeminiFoodNormalizerService>();
+builder.Services.AddScoped<NutritionCalculatorService>();
+builder.Services.AddScoped<CoachingApp.Infrastructure.Data.Seeds.NutritionSeeder>();
+
 // Register Progress & Macro Services
 builder.Services.AddScoped<MacroPlanService>();
 builder.Services.AddScoped<WeeklyProgressService>();
@@ -159,6 +165,13 @@ app.UseStaticFiles(new Microsoft.AspNetCore.Builder.StaticFileOptions
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Seed CIQUAL nutrition reference (idempotent — runs only if table is empty)
+using (var scope = app.Services.CreateScope())
+{
+    var seeder = scope.ServiceProvider.GetRequiredService<CoachingApp.Infrastructure.Data.Seeds.NutritionSeeder>();
+    await seeder.SeedIfEmptyAsync();
+}
 
 app.MapControllers();
 

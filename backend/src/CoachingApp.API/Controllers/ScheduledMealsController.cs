@@ -120,17 +120,43 @@ namespace CoachingApp.API.Controllers
             try
             {
                 var result = await _service.DeleteScheduledMealAsync(id);
-                
                 if (!result)
-                {
                     return NotFound(new { message = $"Scheduled meal with ID {id} not found" });
-                }
-
                 return NoContent();
             }
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = "Error deleting scheduled meal", error = ex.Message });
+            }
+        }
+
+        [HttpPost("{id}/override")]
+        public async Task<ActionResult<MealOverrideInfo>> CreateOverride(int id, [FromBody] CreateMealOverrideRequest request)
+        {
+            try
+            {
+                var result = await _service.CreateOverrideAsync(id, request);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error creating meal override", error = ex.Message });
+            }
+        }
+
+        [HttpDelete("{id}/override")]
+        public async Task<ActionResult> DeleteOverride(int id)
+        {
+            try
+            {
+                var result = await _service.DeleteOverrideAsync(id);
+                if (!result)
+                    return NotFound(new { message = $"No override found for scheduled meal {id}" });
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error deleting meal override", error = ex.Message });
             }
         }
     }

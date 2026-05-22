@@ -92,3 +92,10 @@ public enum SupplementTiming
     PreWorkout,
     PostWorkout
 }
+
+public enum NutritionGoal
+{
+    Deficit,
+    Maintenance,
+    Surplus
+}

@@ -58,5 +58,6 @@ export const scheduledMealService = {
      */
     deleteScheduledMeal: async (scheduledMealId: number): Promise<void> => {
         await api.delete(`/scheduledmeals/${scheduledMealId}`);
-    }
+    },
+
 };

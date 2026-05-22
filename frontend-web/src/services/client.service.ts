@@ -14,12 +14,16 @@ export interface ClientSummary {
     adherentEmail?: string;
     profilePicture?: string;
     age?: number;
+    gender?: string;
+    height?: number;
     status: 'Active' | 'Paused' | 'Inactive' | 'Completed' | 'Cancelled';
     startDate: string;
     endDate?: string;
     goalSummary?: string;
     lastWeight?: number;
     lastActivityDate?: string;
+    nutritionGoal?: 'Deficit' | 'Maintenance' | 'Surplus';
+    caloriesDelta?: number;
 }
 
 export interface IntakePhotoDto {

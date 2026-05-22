@@ -1,9 +1,16 @@
 namespace CoachingApp.Core.DTOs;
 
 public record MealIngredientDto(
+    int? MealIngredientId,
     string Name,
     decimal QuantityGrams,
-    int OrderIndex
+    int OrderIndex,
+    decimal? Calories,
+    decimal? Proteins,
+    decimal? Carbs,
+    decimal? Fats,
+    string? MacroSource,
+    bool MacroCalculationFailed
 );
 
 public record MealResponse(
@@ -14,6 +21,11 @@ public record MealResponse(
     string? ImageUrl,
     int OrderIndex,
     List<MealIngredientDto> Ingredients,
+    decimal? TotalCalories,
+    decimal? TotalProteins,
+    decimal? TotalCarbs,
+    decimal? TotalFats,
+    bool HasFailedIngredients,
     DateTime CreatedAt,
     DateTime UpdatedAt
 );
@@ -23,11 +35,19 @@ public record CreateMealRequest(
     string Name,
     string? Description,
     List<MealIngredientDto> Ingredients,
-    int OrderIndex
+    int OrderIndex,
+    bool CalculateMacrosWithAI = false
 );
 
 public record UpdateMealRequest(
     string Name,
     string? Description,
     List<MealIngredientDto> Ingredients
+);
+
+public record ManualMacrosDto(
+    decimal Calories,
+    decimal Proteins,
+    decimal Carbs,
+    decimal Fats
 );
